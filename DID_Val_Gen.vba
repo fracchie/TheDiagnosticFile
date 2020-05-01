@@ -1,0 +1,903 @@
+Option Explicit
+
+
+' clean immediate window
+'Application.SendKeys "^g ^a {DEL}"
+' in immediate window, at the end of the macro it outputs this line of code in between two marker lines.
+' place the cursor directly next to it and press ok to clean immediate window
+
+'================ Rules ==============
+' Data need to be sorted by DID first, then by Start byte and then for Bit offset. all smaller first
+' The whole parameter tab needs to be sorted before launching the Macro
+' Formats defined in the parameter tab must be met (spaces, dots, naming, Xs etc. )
+
+'=============== The macro =============
+' The macro reads values contained in parameters tab and threats them as Ranges.
+' Then, iterating inside these ranges, actions are performed,
+' to recognise different DIDs, their definition, and perform read and write operations
+' in session 1 and 2 just reading it is allowed
+' in session 3 also writing. first, the min value will be tested, then the max (checking also if DID can go out of range)
+' then, if checked and true, an outofrange value is tested
+' finally, default value (as defined in DID list) is written again in the DID
+
+' PValXML is the main. For each session, DIDs are analysed and needed operations (act/deact via switches in param tab) are performed
+' via DIDValStep, that is the function writing a line of the validation (a step) in the arrival sheet.
+' Depending on the given arguments (i.e. rw=[WRITE, READ, CHECK], val=[MIN,MAX,DEF,OUTOFRANGE], res=[FORBIDDEN, OUTOFRANGE...]
+' it uses the specific functions MinimumValue etc. to compose the binary message, to be translated in hex, to be sent
+
+'============================================================================================================================================================================================================================================================================================
+'      Global Variables Declaration
+'============================================================================================================================================================================================================================================================================================
+
+Public A As Integer
+Public D As Integer
+
+Public HeadersRangeD As Range
+Public NameRangeD As Range
+Public DIDRangeD As Range
+Public LengthRangeD As Range
+Public SizeRangeD As Range
+Public WriteRangeD As Range
+Public ReadRangeD As Range
+Public SnapRangeD As Range
+Public StartRangeD As Range
+Public BitOffsetRangeD As Range
+Public DefaultRangeD As Range
+Public NumericRangeD As Range
+Public ListRangeD As Range
+Public MinRangeD As Range
+Public MaxRangeD As Range
+Public ResRangeD As Range
+Public CodingRangeD As Range
+Public SignRangeD As Range
+Public OffsetRangeD As Range
+Public IgnoreDefRangeD As Range
+Public AsciRangeD As Range
+
+Public Const FORBIDDEN = "FORBIDDEN"
+'Public Const OUTOFRANGE = "OUTOFRANGE"
+
+'Public DT As Integer
+Public ServiceColA As Integer
+Public SIDColA As Integer
+Public IDColA As Integer
+Public SessionColA As Integer
+Public RequestColA As Integer
+Public ResponseColA As Integer
+Public HeadersRangeA As Range
+Public list As String, value As String, Label As String
+Public Color
+Public session As Integer
+Public Sheet As Worksheet
+Public Cell As Range
+Public WriteCheck As Boolean
+Public i As Integer
+Public Bit As Integer
+Public IgnoreDef As Boolean
+Public OutOfRange As Boolean
+Public DIDNumber As String
+Public DIDName As String
+
+Public ButtonSession1 As Shape
+Public ButtonSession2 As Shape
+Public ButtonSession3 As Shape
+Public ButtonRWSession1 As Shape
+Public ButtonRWSession2 As Shape
+Public ButtonRWSession3 As Shape
+Public ButtonXML As Shape
+Public ButtonReset As Shape
+
+
+Sub PValXML()
+
+'============================================================================================================================================================================================================================================================================================
+'           Setup
+'============================================================================================================================================================================================================================================================================================
+
+'    Workbooks("PVal macro").Activate 'use that when debugging with several workbooks open
+    ThisWorkbook.Activate
+    '----------------------------------------------------------------------------------------------------
+    'Variables declaration and init
+    '----------------------------------------------------------------------------------------------------
+
+    Worksheets("Parameters").Activate
+
+    'Set HeadersRangeD = Range("HeadersRangeD", Range("HeadersRangeD").End(xlToRight).Address)
+    Set HeadersRangeD = Range("Name", Range("Name").End(xlToRight).Address)
+    HeadersRangeD.Select
+    'would like to format the whole thing as a tab, and maybe formatting the headers as text
+    'Find the needed columns in the header list. By default is NOT CASE SENSITIVE
+    Set NameRangeD = Range(HeadersRangeD.Find("Name", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Name", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
+    Set DIDRangeD = Range(HeadersRangeD.Find("DID", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("DID", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
+    Set LengthRangeD = Range(HeadersRangeD.Find("Length (Byte)", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Length (Byte)", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
+    Set WriteRangeD = Range(HeadersRangeD.Find("Write by DID", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Write by DID", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
+    Set ReadRangeD = Range(HeadersRangeD.Find("Read by DID", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Read by DID", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
+    Set SizeRangeD = Range(HeadersRangeD.Find("Size (bit)", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Size (bit)", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
+    Set DefaultRangeD = Range(HeadersRangeD.Find("Default Value", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Default Value", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
+    Set NumericRangeD = Range(HeadersRangeD.Find("Numeric", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Numeric", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
+    Set MinRangeD = Range(HeadersRangeD.Find("min", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("min", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
+    Set MaxRangeD = Range(HeadersRangeD.Find("max", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("max", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
+    Set ResRangeD = Range(HeadersRangeD.Find("resolution", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("resolution", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
+    Set SignRangeD = Range(HeadersRangeD.Find("sign", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("sign", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
+    Set OffsetRangeD = Range(HeadersRangeD.Find("Value offset", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Value offset", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
+    Set ListRangeD = Range(HeadersRangeD.Find("List", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("List", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
+    Set StartRangeD = Range(HeadersRangeD.Find("Start Byte", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Start Byte", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
+    Set BitOffsetRangeD = Range(HeadersRangeD.Find("Bit offset", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Bit offset", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
+    Set CodingRangeD = Range(HeadersRangeD.Find("Coding", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Coding", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
+    Set IgnoreDefRangeD = Range(HeadersRangeD.Find("IgnoreDef DID", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("IgnoreDef DID", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
+    Set AsciRangeD = Range(HeadersRangeD.Find("ASCII|HEXA", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("ASCII|HEXA", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
+
+    Set ButtonSession1 = Worksheets("Parameters").Shapes("ButtonSession1")
+    Set ButtonSession2 = Worksheets("Parameters").Shapes("ButtonSession2")
+    Set ButtonSession3 = Worksheets("Parameters").Shapes("ButtonSession3")
+    Set ButtonReset = Worksheets("Parameters").Shapes("ButtonReset")
+    Set ButtonRWSession1 = Worksheets("Parameters").Shapes("ButtonRWSession1")
+    Set ButtonRWSession2 = Worksheets("Parameters").Shapes("ButtonRWSession2")
+    Set ButtonRWSession3 = Worksheets("Parameters").Shapes("ButtonRWSession3")
+    Set ButtonXML = Worksheets("Parameters").Shapes("ButtonXML")
+
+    '----------------------------------------------------------------------------------------------------
+    '"Arrival" sheet : PVal
+    '----------------------------------------------------------------------------------------------------
+
+    Call CreateNewTab("PVal")
+    'Define  the columns containing the data, by default
+    ServiceColA = 2
+    SIDColA = 3
+    IDColA = 4
+    SessionColA = 8
+    RequestColA = 9
+    ResponseColA = 10
+
+    '----------------------------------------------------------------------------------------
+    'Headers
+    '----------------------------------------------------------------------------------------
+    A = 1
+    Cells(A, ServiceColA).value = "Service name"
+    Cells(A, SIDColA).value = "SID"
+    Cells(A, IDColA).value = "2d Byte (not always a DID)"
+    Cells(A, SessionColA).value = "Authorised sessions before sending the request for validation "
+    Cells(A, RequestColA).value = "Request sent for validation"
+    Cells(A, ResponseColA).value = "Positive response expected"
+
+    'Format: Columns width
+    Columns("A").ColumnWidth = 5
+    Columns(ServiceColA).ColumnWidth = 40
+    'Columns("A:J").NumberFormat = "@"
+    Range(Columns(5), Columns(7)).ColumnWidth = 5
+    Columns(RequestColA).ColumnWidth = 40
+    Columns(ResponseColA).ColumnWidth = 40
+    'Format:interior color
+    Set HeadersRangeA = Range(Cells(A, ServiceColA), Cells(A, ResponseColA))
+    HeadersRangeA.Interior.Color = RGB(255, 192, 0)
+    HeadersRangeA.RowHeight = 30
+    HeadersRangeA.Font.Bold = 1
+    HeadersRangeA.HorizontalAlignment = xlCenter
+    HeadersRangeA.VerticalAlignment = xlCenter
+    'Format:Borders
+    HeadersRangeA.borders(xlEdgeBottom).Color = RGB(0, 0, 0)
+    HeadersRangeA.borders(xlEdgeLeft).Color = RGB(0, 0, 0)
+    HeadersRangeA.borders(xlEdgeRight).Color = RGB(0, 0, 0)
+    HeadersRangeA.borders(xlEdgeTop).Color = RGB(0, 0, 0)
+    HeadersRangeA.borders(xlInsideVertical).Color = RGB(0, 0, 0)
+
+    HeadersRangeA.WrapText = True
+    Columns("A").HorizontalAlignment = xlCenter
+    Columns("C:J").HorizontalAlignment = xlCenter
+    Columns("A:J").NumberFormat = "@"
+
+    A = 2
+    D = 2
+    Dim j As Integer
+
+
+'======================================================================================================
+' START
+' Repeating the process for each selected session, considering also the RO RW switch
+Debug.Print ("==================================================")
+Debug.Print ("Application.SendKeys " + Chr(34) + "^g ^a {DEL}")
+Debug.Print ("==================================================")
+
+Debug.Print ("")
+Debug.Print ("$$$$$$$$$ START $$$$$$$$$")
+Debug.Print ("")
+'======================================================================================================
+    For session = 1 To 3
+
+'====== Session 1
+        If ((session = 1 And ButtonSession1.TextFrame.Characters.text = "ON") Or (session = 2 And ButtonSession2.TextFrame.Characters.text = "ON")) Then
+            StartDiagSession (session)
+            If ButtonReset.TextFrame2.TextRange.Characters.text = "ON" Then
+                Call ResetECU
+            End If
+
+'========== And for each line of Departure tab, perform required actions for each DID found
+            For D = 2 To NameRangeD.Cells.Count
+
+'=============== New DID
+                If DIDRangeD.Cells(D, 1) <> DIDRangeD.Cells(D - 1, 1) Then
+
+                    '=== get DID name and number
+                    DIDNumber = Right(DIDRangeD.Cells(D, 1).value, 4)
+                    If (InStr(NameRangeD.Cells(D, 1), ".") <> 0) Then
+                        DIDName = Left(NameRangeD.Cells(D, 1), InStr(NameRangeD.Cells(D, 1), ".") - 1)
+                        Debug.Print ("-------- DID: " + DIDNumber + " - " + DIDName + "---------")
+                    Else
+                        DIDName = NameRangeD.Cells(D, 1)
+                        Debug.Print ("-------- DID: " + DIDNumber + " - " + DIDName + "---------")
+                    End If
+
+                    '==========================
+
+                    OutOfRange = False
+
+                    '=== 1st: READ, ignoring if ignorable
+                    If (IgnoreDefRangeD.Cells(D, 1).value <> 0) Then
+                        IgnoreDef = True
+                    Else
+                        IgnoreDef = False
+                    End If
+
+                    If (ReadRangeD.Cells(D, 1).value <> 0) Then 'some DIDs are not even RO, but only snapshots
+                        If (IgnoreDef = True) Then
+                            Call DIDValStep("READ", "DEF", "IGNORE") 'TODO const READ etc
+                        Else
+                            Call DIDValStep("READ", "DEF")
+                        End If
+
+                        '== 1st if RW, also a WRITE in session1 - expected to be forbidden
+                        If ((session = 1 And ButtonRWSession1.TextFrame.Characters.text = "ON") Or (session = 2 And ButtonRWSession2.TextFrame.Characters.text = "ON")) Then
+                            Call DIDValStep("WRITE", "DEF", "FORBIDDEN")
+                        End If
+
+                    End If
+
+                    '===============================
+                    ' TODO Decide if, with RO setting, you want to try to write just once and expect forbidden response or not even that.
+                    ' Put writeCheck = False at the beginning of the session for cycle
+                    ' And repeat the code for other sessions. Check here below, should be the code was working before in other v
+    '                If WriteCheck = False Then
+    '                    Call DIDValStep("WRITE", "DEF", "Forbidden")
+    '                    'Receive the negative response should be enough
+    '                    WriteCheck = True
+    '                End If
+                End If
+'
+            Next D
+
+'======= Execute session 3 if active
+        ElseIf (session = 3 And ButtonSession3.TextFrame.Characters.text = "ON") Then
+            StartDiagSession (session)
+            If ButtonReset.TextFrame2.TextRange.Characters.text = "ON" Then
+                Call ResetECU
+            End If
+
+'========== For each line of Departure tab, perform required actions for each DID found
+            For D = 2 To NameRangeD.Cells.Count
+
+'============== New DID
+                If DIDRangeD.Cells(D, 1) <> DIDRangeD.Cells(D - 1, 1) Then
+
+                    '== get DID name and number
+                    DIDNumber = Right(DIDRangeD.Cells(D, 1).value, 4)
+                    If (InStr(NameRangeD.Cells(D, 1), ".") <> 0) Then
+                        DIDName = Left(NameRangeD.Cells(D, 1), InStr(NameRangeD.Cells(D, 1), ".") - 1)
+                        Debug.Print ("-------- DID: " + DIDNumber + " - " + DIDName + "---------")
+                    Else
+                        DIDName = NameRangeD.Cells(D, 1)
+                        Debug.Print ("-------- DID: " + DIDNumber + " - " + DIDName + "---------")
+                    End If
+
+
+                    'Detect IgnoreDef for DID D
+                    If (IgnoreDefRangeD.Cells(D, 1).value <> 0) Then
+                        IgnoreDef = True
+                    Else
+                        IgnoreDef = False
+                    End If
+
+                    OutOfRange = False
+
+                    'Read Def value
+                    If (ReadRangeD.Cells(D, 1).value <> 0) Then
+                        If (IgnoreDef = True) Then
+                            Call DIDValStep("READ", "DEF", "IGNORE") 'TODO const READ etc
+                        Else
+                            Call DIDValStep("READ", "DEF")
+                        End If
+                    End If
+
+'================== 2nd: Execute Write operation if active. If possible, try to write min, max, OutOfRange value,checking everytime
+                    If ButtonRWSession3.TextFrame.Characters.text = "ON" Then
+
+                        'writable DID. Try writing min, max, out of range(flag set in when comuting max) and then def again
+                        If WriteRangeD.Cells(D, 1).value = "X" Then
+
+                            Call DIDValStep("WRITE", "MIN")
+                            Call DIDValStep("CHECK", "MIN")
+'========================== Write Max, setting flag Outofrange if needed (<- from DIIValStep WRITE MAX))
+                            OutOfRange = False
+                            Call DIDValStep("WRITE", "MAX")
+                            Call DIDValStep("CHECK", "MAX")
+'=========================== If can go out of range (<- Public OutOrRange), test it, writing max +1
+                            If OutOfRange = True Then
+                                Call DIDValStep("WRITE", "OUTOFRANGE", "OUTOFRANGE")
+                                Call DIDValStep("CHECK", "OUTOFRANGE", "IGNORE")
+                            End If
+
+                            Call DIDValStep("WRITE", "DEF")
+                            Call DIDValStep("CHECK", "DEF")
+
+'====================== not writable DID, try writing and expect out of range - don't know why they don't use "subfunction not allowed" or something similar that exists
+                        ElseIf ReadRangeD.Cells(D, 1).value = "X" Then
+                            Call DIDValStep("WRITE", "DEF", "READONLY")
+                        Else 'just a snapshot? do nothing
+
+                        End If
+                    End If
+                End If
+
+            Next D
+
+        End If
+
+    Next session
+
+'$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+    Range("A2", "J" + CStr(A - 1)).Select
+
+'================ .xml file creation ==================
+    If ButtonXML.TextFrame.Characters.text = "ON" Then
+
+        Dim filePath As String
+        Dim fileName As String
+        Dim objShell As Object, objFolder As Object, objFolderItem As Object
+
+        Set objShell = CreateObject("Shell.Application")
+        Set objFolder = objShell.BrowseForFolder(&H0&, "Choose file's path. Consider using the folder 'input' of the DST script generator", &H1&)
+
+        Set objFolderItem = objFolder.Items.Item
+        filePath = objFolderItem.Path
+        fileName = "PVal_DID.xml"
+        'la su peux faire un test pour savoir si l'utilisateur a mis un .xls ou non
+        MsgBox filePath & "\" & fileName
+
+        ' can put a switch "output txt file DST?" and use an IF here
+        'use the info in new tab PVal to create the script DST
+
+        Dim TempByteSent As String
+
+        Dim MyFSO As New FileSystemObject
+        If MyFSO.FolderExists(filePath) Then
+            'MsgBox "The Folder already exists"
+        Else
+            MyFSO.CreateFolder (filePath) '<- Here the
+        End If
+
+        Dim FileOut As TextStream
+        Set FileOut = MyFSO.CreateTextFile(filePath + "\" + fileName, True, True)
+
+        Dim ServiceRangeA As Range
+        Dim CommandSentRangeA As Range
+        Dim ResponseExpectedRangeA As Range
+
+        Worksheets("PVal").Activate
+
+        Set ServiceRangeA = Range("B2", Range("B2").End(xlDown).Address)
+        Set CommandSentRangeA = Range("I2", Range("I2").End(xlDown).Address)
+        Set ResponseExpectedRangeA = Range("J2", Range("J2").End(xlDown).Address)
+
+        'FileOut.WriteLine ("<?xml version=" + Chr(34) + "1.0" + Chr(34) + " encoding=" + Chr(34) + "windows-1252" + Chr(34) + " ?> ")
+        FileOut.Write ("<?xml version=")
+        FileOut.Write (Chr(34))
+        FileOut.Write ("1.0")
+        FileOut.Write (Chr(34))
+        FileOut.Write (" encoding=")
+        FileOut.Write (Chr(34))
+        FileOut.Write ("windows-1252")
+        FileOut.Write (Chr(34))
+        FileOut.Write ("?>")
+        FileOut.WriteBlankLines (1)
+
+        FileOut.WriteLine ("<Scenario description=" + Chr(34) + "ECU connected, DST running, test all the DIDs referring to DID list" + Chr(34) + ">")
+        FileOut.WriteLine ("      <test name=" + Chr(34) + " DID_Val " + Chr(34) + " methode=" + Chr(34) + "2" + Chr(34) + " mode=" + Chr(34) + "PointToPoint" + Chr(34) + " >")
+
+        For i = 1 To ServiceRangeA.Cells.Count
+            FileOut.WriteLine ("            <request name=" + Chr(34) + ServiceRangeA.Cells(i, 1).value + Chr(34) + ">")
+            If (InStr(ResponseExpectedRangeA.Cells(i, 1).value, "ERROR") > 0) Then
+                FileOut.WriteLine ("               <Check codeErr=" + Chr(34) + "2046" + Chr(34) + " codeErr2=" + Chr(34) + "2032" + Chr(34) + " CodeErr3=" + Chr(34) + "2048" + Chr(34) + " CodeErr4=" + Chr(34) + "2056" + Chr(34) + "/>")
+            Else
+                FileOut.Write ("               <Check startbytes=" + Chr(34))
+                FileOut.Write (ResponseExpectedRangeA.Cells(i, 1).value)
+                FileOut.Write (Chr(34) + "/>")
+                FileOut.WriteBlankLines (1)
+                'FileOut.WriteLine ("               <Check startbytes=" + Chr(34) + ResponseExpectedRangeA.Cells(i, 1).Value + Chr(34) + "/>")
+                'Did not get why does not take responseExpectedRange, it keeps saying invalide type. Last time it was. Tried to debug, at the end i worked around in that way
+            End If
+
+            TempByteSent = CommandSentRangeA.Cells(i, 1).value
+            For j = 1 To Len(TempByteSent) Step 2
+                FileOut.WriteLine ("               <byte min=" + Chr(34) + Mid(TempByteSent, j, 2) + Chr(34) + "/>")
+            Next j
+
+            FileOut.WriteLine ("            </request>")
+
+        Next i
+
+        FileOut.WriteLine ("     </test>")
+        FileOut.WriteLine ("</Scenario>")
+
+    End If
+
+
+    Debug.Print ("==================================================")
+    Debug.Print ("Application.SendKeys " + Chr(34) + "^g ^a {DEL}")
+    Debug.Print ("==================================================")
+
+End Sub
+
+Public Function DecToBin(dec As Variant, NumBit As Integer, Optional ByVal res As Variant = 1, Optional ByVal off As Double = 0) As String
+' converts a decimal number in a binary value in n bit
+'think about the resolution
+    Dim i As Integer
+    If dec <> 0 Then
+        dec = dec / res
+    End If
+    dec = dec - off
+    For i = NumBit - 1 To 0 Step -1 'countdown
+        If Int(dec / (2 ^ i)) > 0 Then
+            DecToBin = DecToBin + "1"
+            dec = dec - (2 ^ i)
+        Else
+            DecToBin = DecToBin + "0"
+        End If
+    Next i
+End Function
+
+Function BinToHex(Binary As String)
+    Dim value&, i&, Base#: Base = 1
+    Dim l As Integer, j As Integer
+    Dim text As String
+    Dim substring As String
+    Dim original As String
+    Dim hexadecimal As String
+
+    hexadecimal = ""
+    original = Binary
+    Do While Len(original) \ 8 >= 1
+        substring = Left(original, 8)
+        'Convert substring (byte)
+        l = Len(substring)
+        value = 0
+        Base = 1
+
+        For i = Len(substring) To 1 Step -1
+            value = value + IIf(Mid(substring, i, 1) = "1", Base, 0) ' -> no bit limit anymore
+            Base = Base * 2
+        Next i
+        text = Hex(value) 'Hex converts from decimal to hex
+
+        l = l - (Len(text) * 4)
+
+        Do While l > 0
+            l = l - 4
+            text = "0" + text
+        Loop
+
+        hexadecimal = hexadecimal + text
+        original = Right(original, Len(original) - 8)
+    Loop
+
+    BinToHex = hexadecimal
+
+'    l = Len(Binary)
+'
+'
+'    For i = Len(Binary) To 1 Step -1
+'    Value = Value + IIf(Mid(Binary, i, 1) = "1", Base, 0) ' ->max 31 bit!
+'    Base = Base * 2
+'    Next i
+'    text = Hex(Value) 'Hex converts from decimal to hex
+'
+'    l = l - (Len(text) * 4)
+'
+'    Do While l > 0
+'        l = l - 4
+'        text = "0" + text
+'    Loop
+'
+'    BinToHex = text
+
+End Function
+
+Function ComputeContent(what As String) As String
+
+    Dim bin As String
+    Dim res As Double
+    Dim off As Double
+    Dim dec As Double
+    Dim DT As Double 'Temp starting from <-Public D, first data in new DID
+    Dim Size As Integer
+    Dim list() As String
+    Dim DataName As String
+    Dim i As Integer
+
+    bin = ""
+    Bit = 0
+    DT = D
+    DataName = ""
+
+'=== loop into param of DID
+'D starts from 2, because 1 is the header. The number of param is the count of cells in range -1, so that, starting from 2, DT = X means that we are at the X-1th parameter
+    Do While ((DT <= DIDRangeD.Cells.Count) And DIDRangeD.Cells(DT, 1).value = ("$" + DIDNumber)) 'putting the condition on length first it avoids to go in overflow (out of table))
+
+        DataName = NameRangeD.Cells(DT, 1).value
+        Debug.Print ("...." + DataName + "....")
+
+        'pre-padding
+        Do While Bit < ((StartRangeD.Cells(DT, 1).value - 1) * 8) + BitOffsetRangeD.Cells(DT, 1)
+            Bit = Bit + 1
+            bin = bin + "0"
+        Loop
+
+        ' Numeric ================================
+        If NumericRangeD.Cells(DT, 1).value <> 0 Then
+            res = CDbl(ResRangeD.Cells(DT, 1).value)
+            off = CDbl(OffsetRangeD.Cells(DT, 1).value)
+            Size = CDbl(SizeRangeD.Cells(DT, 1).value)
+            ' Signed values, msb sign carry - TODO check if they use 2-complement instead 'TODO manage negative, decide if 2compl or msb
+            If SignRangeD.Cells(DT, 1).value = "s" Then
+                Size = Size - 1
+                If (dec < 0) Then
+                    bin = bin + "1"
+                    dec = -1 * dec 'abs
+                Else
+                    bin = bin + "0"
+                End If
+            End If
+
+            Select Case what
+                Case "MIN"
+                    dec = CDbl(MinRangeD.Cells(DT, 1).value)
+                Case "MAX"
+                    dec = CDbl(MaxRangeD.Cells(DT, 1).value)
+                    If dec <> (((2 ^ Size) - 1) / res - off) Then
+                        OutOfRange = True
+                        Debug.Print ("Can go out of range")
+                    End If
+                Case "DEF"
+                    If InStr(DefaultRangeD.Cells(DT, 1).value, " ") = 0 Then
+                        dec = CDbl(DefaultRangeD.Cells(DT, 1))
+                    Else
+                        dec = CDbl(Left(DefaultRangeD.Cells(DT, 1).value, (InStr(DefaultRangeD.Cells(DT, 1).value, " ")) - 1))
+                    End If
+                Case "OUTOFRANGE"
+                    dec = CDbl(MaxRangeD.Cells(DT, 1).value) + res
+            End Select
+
+            bin = bin + DecToBin(dec, Size, res, off)
+            '====================================================
+
+        ' List ===========================================
+        ElseIf ListRangeD.Cells(DT, 1) <> 0 Then
+            Size = SizeRangeD.Cells(DT, 1).value
+
+            list = Split(CodingRangeD.Cells(DT, 1), vbLf) 'dividing in lines of kind "0 = asd" ; "1 = asd" etc.
+
+            Select Case what
+                Case "MIN"
+                    dec = Left(list(0), InStr(list(0), " "))
+                Case "MAX"
+                    'It is always writing the last number written in the list of values.
+                    dec = Left(list(UBound(list)), InStr(list(UBound(list)), " ") - 1)
+                    'TODO check Not used values, the function is half working, but shoudld be properly thought how to design this check
+                    'If IsInArray("Not Used", list) <> -1 Then
+                    '    OUTOFRANGE = True
+                    '    Debug.Print ("Can go out of range")
+                    '    Debug.Print ("found")
+                    'End If
+                    If dec <> (((2 ^ Size) - 1)) Then
+                        OutOfRange = True
+                        Debug.Print ("Can go out of range")
+                    End If
+                Case "DEF"
+                    'get dec value, checking white space
+                    If InStr(DefaultRangeD.Cells(DT, 1).value, " ") = 0 Then
+                        dec = CDbl(DefaultRangeD.Cells(DT, 1))
+                    Else
+                        dec = CDbl(Left(DefaultRangeD.Cells(DT, 1).value, (InStr(DefaultRangeD.Cells(DT, 1).value, " ")) - 1))
+                    End If
+
+                Case "OUTOFRANGE"
+                    dec = Left(list(UBound(list)), InStr(list(UBound(list)), " ") - 1) + 1
+                    'i = IsInArray("Not Used", list)
+                    'If i <> -1 Then
+                    '    Debug.Print ("out of range element " + i)
+                    '    'dec = Left(list(IsInArray("Not Used", list), InStr(IsInArray("Not Used", list), " "))
+                    'End If
+
+                    'for each element in string array, search if there is "No Used".
+                    'try to write it in the DID -> just one, or all?
+                    'dec = Left(list(UBound(list)), InStr(list(UBound(list)), " ") - 1) + res
+                    'TODO find not used values
+            End Select
+
+            bin = bin + DecToBin(dec, Size)
+
+        ElseIf AsciRangeD.Cells(DT, 1) <> 0 Then
+
+            For i = 0 To Size
+                bin = bin + "0"
+            Next i
+        End If
+
+        Bit = Bit + SizeRangeD.Cells(DT, 1) 'TODO watchout if using negative number represtation msb, check if did size-1
+        DT = DT + 1
+
+    Loop
+
+''===== Check if at least one data can go out of range. NOTE check if supplier implements as if you can still write the others data in DID, if not out of range. see if it is ok
+'        Debug.Print ("max = " + Str(Max))
+'        Debug.Print ("range = " + Str((((2 ^ size) - 1) / res - off)))
+'        If Max <> (((2 ^ size) - 1) / res - off) Then
+'            OutOfRange = True
+'        End If
+
+'    Final padding
+    If Bit Mod 8 <> 0 Then
+        For i = (Bit Mod 8) To 7
+            bin = bin + "0"
+            Bit = Bit + 1
+        Next i
+    End If
+
+    ComputeContent = BinToHex(bin)
+
+End Function
+
+Function IsInArray(stringToBeFound As String, arr As Variant) As Long
+  Dim i As Long
+  Dim found As Boolean
+  ' default return value if value not found in array
+  IsInArray = -1
+  found = False
+
+    Do While (found = False)
+        Debug.Print ("found!")
+        found = True
+    Loop
+
+  For i = LBound(arr) To UBound(arr)
+    If InStr(stringToBeFound, arr(i), 1) = 0 Then
+      IsInArray = i
+      Exit For
+    End If
+  Next i
+End Function
+
+Function DefaultValue() As String
+'--------------------------------------------
+'   For each DID (<- public D)
+
+    Dim bin As String
+    Dim dec As Double
+    Dim res As Double
+    Dim off As Double
+    Dim Size As Integer
+    Dim DT As Double
+    Dim space As Integer
+
+    Debug.Print ("...... " + NameRangeD.Cells(D, 1) + " ......")
+
+    space = InStr(DefaultRangeD.Cells(D, 1).value, " ")
+    If space = 0 Then
+        dec = DefaultRangeD.Cells(D, 1)
+    Else
+        dec = Left(DefaultRangeD.Cells(D, 1).value, space - 1)
+    End If
+
+    '--------------------------------------
+    ' initial padding, all 0s till beginning of data in DID
+    '-------------------------------------
+    bin = ""
+    Bit = 0
+    Do While Bit < ((StartRangeD.Cells(D, 1).value - 1) * 8) + BitOffsetRangeD.Cells(D, 1)
+        Bit = Bit + 1
+        bin = bin + "0"
+    Loop
+
+    'Write value
+
+    'TODO manage value with "," insert a quick if "," -> text "no auto val"
+    'can think to standardize "tbc" value in ref 17
+
+'-----------------------------
+' Get
+
+    Size = SizeRangeD.Cells(D, 1)
+
+    If NumericRangeD.Cells(D, 1) <> 0 Then
+
+            res = CDbl(ResRangeD.Cells(D, 1).value)
+            Debug.Print (res)
+        off = OffsetRangeD.Cells(D, 1).value
+        If SignRangeD.Cells(D, 1).value <> 0 Then
+            Size = Size - 1
+            If dec < 0 Then 'signed notation: -1 first bit
+                bin = bin + "1"
+                dec = -1 * dec 'abs
+            Else
+                bin = bin + "0"
+            End If
+        End If
+
+    ElseIf ListRangeD.Cells(D, 1) <> 0 Then
+        res = 1
+        off = 0
+    End If
+
+    bin = bin + DecToBin(dec, Size, res, off)
+
+    Bit = Bit + SizeRangeD.Cells(D, 1)
+
+    DT = D + 1
+    Do While DIDRangeD.Cells(DT, 1) = DIDRangeD.Cells(DT - 1, 1)
+
+        Debug.Print ("...... " + NameRangeD.Cells(DT, 1) + " ......")
+        Do While Bit < ((StartRangeD.Cells(DT, 1).value - 1) * 8) + BitOffsetRangeD.Cells(DT, 1)
+            Bit = Bit + 1
+            bin = bin + "0"
+        Loop
+
+        'get dec value
+        space = InStr(DefaultRangeD.Cells(DT, 1).value, " ")
+        If space = 0 Then
+            dec = DefaultRangeD.Cells(DT, 1)
+        Else
+            dec = Left(DefaultRangeD.Cells(DT, 1).value, space - 1)
+        End If
+
+        Size = SizeRangeD.Cells(DT, 1)
+
+        If NumericRangeD.Cells(DT, 1) <> 0 Then
+
+            res = CDbl(ResRangeD.Cells(DT, 1).value)
+            Debug.Print (res)
+
+            off = OffsetRangeD.Cells(DT, 1).value
+            If SignRangeD.Cells(DT, 1).value <> 0 Then
+                Size = Size - 1
+                If dec < 0 Then 'signed notation: -1 first bit TODO check if it is 2-complement implementation
+                    bin = bin + "1"
+                    dec = -1 * dec 'abs
+                Else
+                    bin = bin + "0"
+                End If
+            End If
+
+        ElseIf ListRangeD.Cells(DT, 1) <> 0 Then
+            res = 1
+            off = 0
+        End If
+
+        bin = bin + DecToBin(dec, Size, res, off)
+
+        Bit = Bit + SizeRangeD.Cells(DT, 1)
+        DT = DT + 1
+    Loop
+
+'    Final padding
+    If Bit Mod 8 <> 0 Then
+        For i = (Bit Mod 8) To 7
+            bin = bin + "0"
+            Bit = Bit + 1
+        Next i
+    End If
+
+'    Debug.Print (bin)
+    DefaultValue = bin
+
+End Function
+
+
+Function DIDValStep(operation As String, what As String, Optional ByVal response As String = "")
+
+    Debug.Print ("-------------- " + operation + " " + what + " --------------")
+
+'=== Write all the cells of the Arrival table, using Value as a temporary variable:
+
+    'number of step: needed for script with pris diag -> scriptEditor
+    Cells(A, 1).value = A - 1
+
+    'Write the kind of operation to perform
+    Cells(A, ServiceColA).value = operation + " value " + what + " in " + DIDName
+
+    Cells(A, IDColA).value = DIDRangeD.Cells(D, 1).value
+    Cells(A, SessionColA).value = "100" + CStr(session)
+
+    'compose the content of the DID, either for the request or for the response
+    value = ComputeContent(what)
+
+    Select Case operation
+        Case "WRITE"
+            'Write request
+            Cells(A, RequestColA).value = "2E" + DIDNumber + value
+            Cells(A, SIDColA).value = "$2E"
+            'write response
+            If response = "FORBIDDEN" Then
+                Cells(A, ResponseColA).value = "ERROR#2046 : Requested service $2E, Negative reply 31 : Service Not Supported In Active Session"
+                Range(Cells(A, ResponseColA).Address).HorizontalAlignment = xlLeft
+            ElseIf response = "READONLY" Then
+                Cells(A, ResponseColA).value = "ERROR#2048 : Requested service $2E, Negative reply 31 : Request Out Of Range"
+                Range(Cells(A, ResponseColA).Address).HorizontalAlignment = xlLeft
+            ElseIf response = "OUTOFRANGE" Then
+                Cells(A, ResponseColA).value = "ERROR#2048 : Requested service $2E, Negative reply 31 : Request Out Of Range "
+                Range(Cells(A, ResponseColA).Address).HorizontalAlignment = xlLeft
+            Else
+                Cells(A, ResponseColA).value = "6E" + DIDNumber
+            End If
+
+        Case Else 'Read or Check
+            'Write request
+            Cells(A, RequestColA).value = "22" + DIDNumber
+            Cells(A, SIDColA).value = "$22"
+            'Write response
+            If (response = "IGNORE" Or response = "OUTOFRANGE") Then
+                Cells(A, ResponseColA).value = ""
+            Else
+                Cells(A, ResponseColA).value = "62" + DIDNumber + value
+            End If
+
+    End Select
+
+'==Next (-> Public A)
+    A = A + 1
+
+End Function
+
+Function StartDiagSession(session As Integer)
+
+        Cells(A, ServiceColA).value = "StartDiagnosticSession"
+        Cells(A, SIDColA).value = "$10"
+        Cells(A, SessionColA).value = "100" + CStr(session)
+        Cells(A, IDColA).value = "$0" + CStr(session)
+        If (ButtonXML.TextFrame.Characters.text = "OFF") Then
+            'For scriptGenerator, no command for start diag session should be sent
+        Else
+            Cells(A, RequestColA).value = "100" + CStr(session)
+        End If
+
+        Cells(A, ResponseColA).value = "500" + CStr(session) + "003201F4"
+        Cells(A, 1).value = A - 1
+        A = A + 1
+
+End Function
+
+Function ResetECU()
+
+            Cells(A, 1).value = A - 1
+            Cells(A, ServiceColA).value = "ECUReset"
+            Cells(A, SessionColA).value = "100" + CStr(session)
+            Cells(A, RequestColA).value = "1101" 'verify the mechanism of the script
+            A = A + 1
+
+End Function
+
+Function ChooseFolder() As String
+    Dim fldr As FileDialog
+    Dim sItem As String
+
+    Set fldr = Application.FileDialog(msoFileDialogFolderPicker)
+    With fldr
+        .Title = "Select a Folder"
+        .AllowMultiSelect = False
+        .InitialFileName = strPath
+        If .Show <> -1 Then GoTo NextCode
+        sItem = .SelectedItems(1)
+    End With
+
+NextCode:
+    ChooseFolder = sItem
+    Set fldr = Nothing
+End Function
