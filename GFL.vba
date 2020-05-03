@@ -208,13 +208,16 @@ Public Function CanoeReadDTC(Optional ByVal DTC As String = "", Optional ByVal F
         temp = "readDTC();"
     Else
         If (FaultType = "") Then
-            temp = "readDTC(" + DTC + ");"
+            temp = "readDTC(" + DTC
         Else
-            temp = "readDTC(" + DTC + ", " + FaultType + ");"
+            temp = "readDTC(" + DTC + ", " + FaultType
         End If
     End If
+    If Status <> "" Then
+        temp = temp + "," + Status
+    End If
+    temp = temp + ");"
     'TODO check the status present or memorised.
-    Debug.Print ("> " + temp)
     CanoeReadDTC = temp
 End Function
 
@@ -234,26 +237,32 @@ Public Function CanoeRestoreFrame(Channel As String, ECU As String, Frame As Str
     CanoeRestoreFrame = temp
 End Function
 
-Public Function CanoeCutFrame(Channel As String, ECU As String, Frame As String, Optional ByVal time As String = 0) As String 'TODO add optional put back signal after x ms
+Public Function CanoeCutFrame(Channel As String, ECU As String, Frame As String) As String 'TODO add optional put back signal after x ms
     Dim temp As String
     temp = "@sysvar::" + Channel + "::" + ECU + "::" + Frame + "::TIMINGS::EnableCyclic=0"
-    Debug.Print ("> Cut frame " + Frame)
     CanoeCutFrame = temp
     'TODO the time management, but for the moment it is not designed like that. Call restoreFrame instead
 End Function
 
-Public Function CanoeSetSignalValue(signal As String, value As String) As String
-    Dim temp As String
-    temp = "$" + signal + " = " + value + ";"
-    CanoeSetSignalValue = temp
-End Function
 
-Public Function CanoeReadSignalValue(signal As String, Optional ByVal ExpectedValue As String = "") As String
+Public Function CanoeReadSignalValue(signal As String, Optional ByVal ExpectedValue As String = "", Optional ByVal expResult As Boolean = True) As String
     Dim temp As String
-    temp = ""
+
+    temp = "readSignal($" + signal
+    If ExpectedValue <> "" Then
+        temp = temp + "," + ExpectedValue
+    End If
+    temp = temp + "," + CStr(expResult)
     'difficult because the otuput of this function should be multiple lines of CAPL code.
     ' soulution would be to transmit also the reference to the TextStream to output directly from here... TODO
-    CanoeReadSignalValue = "TODO Function no ready"
+    temp = temp + ");"
+    CanoeReadSignalValue = temp
+End Function
+
+Public Function CanoeWriteSignalValue(signal As String, value As String) As String
+    Dim temp As String
+    temp = "writeSignal($" + signal + "," + value + ");"
+    CanoeWriteSignalValue = temp
 End Function
 
 
@@ -393,7 +402,6 @@ End Function
 
 Public Function CanoeDelay(time As String) As String
     Dim temp As String
-    temp = "Delay( " + time + ");"
-    Debug.Print ("> wait " + time + " ms")
+    temp = "Delay(" + time + ");"
     CanoeDelay = temp
 End Function
