@@ -313,7 +313,7 @@ Public Function formatCell(r As Integer, c As Integer, text As String, Optional 
                 .Font.Color = RGB(0, 0, 0)
         End Select
 
-        .Font.Size = FontSize
+        .Font.size = FontSize
         .VerticalAlignment = xlCenter
         .HorizontalAlignment = xlCenter
         .Orientation = 0
@@ -404,4 +404,52 @@ Public Function CanoeDelay(time As String) As String
     Dim temp As String
     temp = "Delay(" + time + ");"
     CanoeDelay = temp
+End Function
+
+Public Function replaceInString(original As String, replacement As String, startPos0based As Integer) As String
+'TODO if replacing would make the original word bigger, manage it. for the moment i don't care
+    Dim i As Integer
+    Dim out As String
+    out = ""
+    Dim digit As String
+    i = 0
+    Do While i < startPos0based
+        digit = Left(original, i + 1)
+        digit = Right(digit, 1)
+        out = out + digit
+        i = i + 1
+    Loop
+
+    out = out + replacement
+    i = i + Len(replacement)
+
+    Do While i < Len(original)
+        digit = Left(original, i + 1)
+        digit = Right(digit, 1)
+        out = out + digit
+        i = i + 1
+    Loop
+
+    replaceInString = out
+
+End Function
+
+Function IsInArray(stringToBeFound As String, arr As Variant) As Integer
+  Dim i As Long
+  Dim found As Boolean
+  ' default return value if value not found in array
+  IsInArray = -1
+  found = False
+
+    Do While (found = False)
+        Debug.Print ("found!")
+        found = True
+    Loop
+
+  For i = LBound(arr) To UBound(arr)
+    If InStr(stringToBeFound, arr(i), 1) = 0 Then
+      IsInArray = i
+      Exit For
+    End If
+  Next i
 End Function

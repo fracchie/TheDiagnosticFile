@@ -2,16 +2,16 @@ Sub NumericListComponent()
 
 'TODO generalise this function
 
-    Dim Size As Integer
+    Dim size As Integer
     Dim i As Integer
     Dim coding As String
 
-    Size = Range("CodingSize").Offset(1, 0).value
+    size = Range("CodingSize").Offset(1, 0).value
 
     coding = Empty
 
-    For i = 0 To ((2 ^ Size) - 1)
-        coding = coding + CStr(i) + " = NotUsed;" + vbCrLf
+    For i = 0 To ((2 ^ size) - 1)
+        coding = coding + CStr(i) + " : Not Used" + vbCrLf
     Next i
 
     Range("CodingSize").Offset(1, 1).value = coding
