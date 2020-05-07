@@ -313,18 +313,20 @@ Debug.Print ("")
 
                         'writable DID. Try writing min, max, out of range(flag set in when comuting max) and then def again
                         If WriteRangeD.Cells(D, 1).value = "X" Then
-
-                            Call DIDValStep("WRITE", "MIN")
-                            Call DIDValStep("CHECK", "MIN")
+                            'TODO check if the new MinMaxValueLoop works as well as the other, but more detailed
+                            'Call DIDValStep("WRITE", "MIN")
+                            'Call DIDValStep("CHECK", "MIN")
+                            Call MinMaxValueLoop(DIDdefValueBin, "MIN")
 
                             Call OutOfRangeLoop(DIDdefValueBin, "DOWN")
 
                             'TODO write outOfRange min
 
 '========================== Write Max, setting flag Outofrange if needed (<- from DIIValStep WRITE MAX))
-                            Call DIDValStep("WRITE", "MAX")
-                            Call DIDValStep("CHECK", "MAX")
-
+                            'TODO check if the new MinMaxValueLoop works as well as the other, but more detailed
+                            'Call DIDValStep("WRITE", "MAX")
+                            'Call DIDValStep("CHECK", "MAX")
+                            Call MinMaxValueLoop(DIDdefValueBin, "MAX")
 '=========================== If can go out of range (<- Public OutOrRange), test it, writing max +1
                             Call OutOfRangeLoop(DIDdefValueBin, "UP")
 
@@ -905,6 +907,75 @@ Function ChooseFolder() As String
 NextCode:
     ChooseFolder = sItem
     Set fldr = Nothing
+End Function
+Public Function MinMaxValueLoop(DIDdefValueBin As String, MinMax As String)
+    Dim paramName As String
+    Dim Dt As Integer
+    Dim res As Double
+    Dim off As Double
+    Dim dec As Double
+    Dim size As Integer
+    Dt = D
+    Dim inBin As String
+    inBin = ""
+    Dim out As String
+    Dim bitOff As Integer
+    Dim ByteStart As Integer
+
+    Do While Right(DIDRangeD.Cells(Dt, 1).value, 4) = DIDNumber
+        If NumericRangeD.Cells(Dt, 1) <> 0 Then
+            paramName = NameRangeD.Cells(Dt, 1).value
+            size = CDbl(SizeRangeD.Cells(Dt, 1).value)
+            bitOff = BitOffsetRangeD.Cells(Dt, 1).value
+            ByteStart = StartRangeD.Cells(Dt, 1).value
+            res = CDbl(ResRangeD.Cells(Dt, 1).value)
+            off = CDbl(OffsetRangeD.Cells(Dt, 1).value)
+            ' Signed values, msb sign carry - TODO check if they use 2-complement instead 'TODO manage negative, decide if 2compl or msb
+            If (MinMax = "MAX") Then
+                dec = CDbl(MaxRangeD.Cells(Dt, 1).value)
+            Else 'UpDownList = "MIN"
+                dec = CDbl(MinRangeD.Cells(Dt, 1).value)
+            End If
+
+            If SignRangeD.Cells(Dt, 1).value = "s" Then
+                size = size - 1
+                If (dec < 0) Then
+                    inBin = "1"
+                    dec = -1 * dec 'abs
+                Else
+                    inBin = "0"
+                End If
+            End If
+
+            inBin = DecToBin(dec, size, res, off)
+            out = replaceInString(DIDdefValueBin, inBin, (ByteStart - 1) * 8 + bitOff)
+            Cells(A, 1).value = A - 1
+            Cells(A, SIDColA).value = "$2E"
+            Cells(A, IDColA).value = "$" + DIDNumber
+            Cells(A, ServiceColA).value = "WRITE value " + MinMax + " in " + paramName
+            Cells(A, SessionColA).value = "100" + CStr(session)
+            Cells(A, RequestColA).value = "2E" + DIDNumber + BinToHex(out)
+            Cells(A, ResponseColA).value = "6E" + DIDNumber
+            A = A + 1
+            Cells(A, 1).value = A - 1
+            Cells(A, SIDColA).value = "$22"
+            Cells(A, IDColA).value = "$" + DIDNumber
+            Cells(A, ServiceColA).value = "CHECK value " + MinMax + " in " + paramName
+            Cells(A, SessionColA).value = "100" + CStr(session)
+            Cells(A, RequestColA).value = "22" + DIDNumber
+            Cells(A, ResponseColA).value = "62" + DIDNumber + BinToHex(out)
+            A = A + 1
+            Cells(A, 1).value = A - 1
+            Cells(A, SIDColA).value = "$2E"
+            Cells(A, IDColA).value = "$" + DIDNumber
+            Cells(A, ServiceColA).value = "WRITE back value DEF in " + DIDName
+            Cells(A, SessionColA).value = "100" + CStr(session)
+            Cells(A, RequestColA).value = "2E" + DIDNumber + BinToHex(DIDdefValueBin)
+            Cells(A, ResponseColA).value = "6E" + DIDNumber
+            A = A + 1
+        End If
+        Dt = Dt + 1
+    Loop
 End Function
 
 Public Function OutOfRangeLoop(DIDdefValueBin As String, UpDownList As String)
