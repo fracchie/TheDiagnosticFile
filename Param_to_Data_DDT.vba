@@ -238,17 +238,19 @@ Sub ToData()
                 list = Split(CodingRangeD.Cells(D, 1), vbLf)
                 l = 0
                 For l = 0 To UBound(list)
-                    A = A + 1
-'                    Debug.Print (List(l))
-                    Cells(A, MnemoColA).value = Left(list(l), InStr(list(l), "=") - 1)
-                    Cells(A, SizeColA).value = Right(list(l), Len(list(l)) - InStr(list(l), "="))
-'                    Label = Right(List(L), Len(List(L)) - InStr(List(L), "="))
-'                    Cells(A, SizeColA).Value = Label
-'                       Cells(A, MnemoColA).Value = Split(List(L), "=")
-'                       Cells(R, 2).Value = Value
-'                       Label = Right(List(L), Len(List(L)) - InStr(List(L), "="))
-'                       Cells(R, 3).Value = Label
-                   Next l
+                    If InStr(list(l), "Not Used") <> 0 Then
+                        A = A + 1
+    '                    Debug.Print (List(l))
+                        Cells(A, MnemoColA).value = Left(list(l), InStr(list(l), "=") - 1)
+                        Cells(A, SizeColA).value = Right(list(l), Len(list(l)) - InStr(list(l), "="))
+    '                    Label = Right(List(L), Len(List(L)) - InStr(List(L), "="))
+    '                    Cells(A, SizeColA).Value = Label
+    '                       Cells(A, MnemoColA).Value = Split(List(L), "=")
+    '                       Cells(R, 2).Value = Value
+    '                       Label = Right(List(L), Len(List(L)) - InStr(List(L), "="))
+    '                       Cells(R, 3).Value = Label
+                    End If
+                Next l
             ElseIf AsciiHexaRangeD.Cells(D, 1).value <> 0 Then
                 Cells(A, ListColA).value = AsciiHexaRangeD.Cells(D, 1).value
 
