@@ -369,27 +369,19 @@ End Function
 
 
 Public Function CollapseColumnsRight()
-
-ActiveSheet.Outline.SummaryColumn = xlRight
-
+    ActiveSheet.Outline.SummaryColumn = xlRight
 End Function
 
 Public Function CollapseColumnsLeft()
-
-ActiveSheet.Outline.SummaryColumn = xlLeft
-
+    ActiveSheet.Outline.SummaryColumn = xlLeft
 End Function
 
 Public Function CollapseRowsAbove()
-
-ActiveSheet.Outline.SummaryRow = xlAbove
-
+    ActiveSheet.Outline.SummaryRow = xlAbove
 End Function
 
 Public Function CollapseRowsBelow()
-
-ActiveSheet.Outline.SummaryRow = xlBelow
-
+    ActiveSheet.Outline.SummaryRow = xlBelow
 End Function
 
 Public Function Expand_All()
@@ -407,7 +399,7 @@ Public Function CanoeDelay(time As String) As String
 End Function
 
 Public Function replaceInString(original As String, replacement As String, startPos0based As Integer) As String
-'TODO if replacing would make the original word bigger, manage it. for the moment i don't care
+    'TODO if replacing would make the original word bigger, manage it. for the moment i don't care
     Dim i As Integer
     Dim out As String
     out = ""
@@ -431,15 +423,14 @@ Public Function replaceInString(original As String, replacement As String, start
     Loop
 
     replaceInString = out
-
 End Function
 
 Function IsInArray(stringToBeFound As String, arr As Variant) As Integer
-  Dim i As Long
-  Dim found As Boolean
-  ' default return value if value not found in array
-  IsInArray = -1
-  found = False
+    Dim i As Long
+    Dim found As Boolean
+    ' default return value if value not found in array
+    IsInArray = -1
+    found = False
 
     Do While (found = False)
         Debug.Print ("found!")

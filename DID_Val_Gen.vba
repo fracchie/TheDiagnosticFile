@@ -305,12 +305,10 @@ Debug.Print ("")
                             Call DIDValStep("READ", "DEF")
                         End If
                     End If
-
                     DIDdefValueBin = ComputeContent("DEF", "bin")
 
-'================== 2nd: Execute Write operation if active. If possible, try to write min, max, OutOfRange value,checking everytime
+                    ' 2nd: Execute Write operation if active. If possible, try to write min, max, OutOfRange value,checking everytime
                     If ButtonRWSession3.TextFrame.Characters.text = "ON" Then
-
                         'writable DID. Try writing min, max, out of range(flag set in when comuting max) and then def again
                         If WriteRangeD.Cells(D, 1).value = "X" Then
                             'TODO check if the new MinMaxValueLoop works as well as the other, but more detailed
@@ -322,12 +320,12 @@ Debug.Print ("")
 
                             'TODO write outOfRange min
 
-'========================== Write Max, setting flag Outofrange if needed (<- from DIIValStep WRITE MAX))
+                            ' Write Max, setting flag Outofrange if needed (<- from DIIValStep WRITE MAX))
                             'TODO check if the new MinMaxValueLoop works as well as the other, but more detailed
                             'Call DIDValStep("WRITE", "MAX")
                             'Call DIDValStep("CHECK", "MAX")
                             Call MinMaxValueLoop(DIDdefValueBin, "MAX")
-'=========================== If can go out of range (<- Public OutOrRange), test it, writing max +1
+                            ' If can go out of range (<- Public OutOrRange), test it, writing max +1
                             Call OutOfRangeLoop(DIDdefValueBin, "UP")
 
                             'Call DIDValStep("WRITE", "OUTOFRANGEUP", "OUTOFRANGE")
@@ -338,7 +336,7 @@ Debug.Print ("")
                             Call DIDValStep("WRITE", "DEF")
                             Call DIDValStep("CHECK", "DEF")
 
-'====================== not writable DID, try writing and expect out of range - don't know why they don't use "subfunction not allowed" or something similar that exists
+                            ' not writable DID, try writing and expect out of range - don't know why they don't use "subfunction not allowed" or something similar that exists
                         ElseIf ReadRangeD.Cells(D, 1).value = "X" Then
                             Call DIDValStep("WRITE", "DEF", "READONLY")
                         Else 'just a snapshot? do nothing
