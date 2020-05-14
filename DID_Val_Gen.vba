@@ -109,7 +109,7 @@ Sub PValXML()
     HeadersRangeD.Select
     'would like to format the whole thing as a tab, and maybe formatting the headers as text
     'Find the needed columns in the header list. By default is NOT CASE SENSITIVE
-    Set NameRangeD = Range(HeadersRangeD.Find("Name", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Name", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
+    Set NameRangeD = Range(HeadersRangeD.Find("DID_Name", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("DID_Name", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
     Set DIDRangeD = Range(HeadersRangeD.Find("DID", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("DID", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
     Set LengthRangeD = Range(HeadersRangeD.Find("Length (Byte)", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Length (Byte)", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
     Set WriteRangeD = Range(HeadersRangeD.Find("Write by DID", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Write by DID", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
@@ -309,8 +309,11 @@ Debug.Print ("")
 
                     ' 2nd: Execute Write operation if active. If possible, try to write min, max, OutOfRange value,checking everytime
                     If ButtonRWSession3.TextFrame.Characters.text = "ON" Then
+
                         'writable DID. Try writing min, max, out of range(flag set in when comuting max) and then def again
                         If WriteRangeD.Cells(D, 1).value = "X" Then
+
+                            Call DIDValStep("WRITE", "DEF")
                             'TODO check if the new MinMaxValueLoop works as well as the other, but more detailed
                             'Call DIDValStep("WRITE", "MIN")
                             'Call DIDValStep("CHECK", "MIN")
@@ -907,7 +910,7 @@ NextCode:
     Set fldr = Nothing
 End Function
 Public Function MinMaxValueLoop(DIDdefValueBin As String, MinMax As String)
-    Dim paramName As String
+    Dim ParamName As String
     Dim Dt As Integer
     Dim res As Double
     Dim off As Double
@@ -922,7 +925,7 @@ Public Function MinMaxValueLoop(DIDdefValueBin As String, MinMax As String)
 
     Do While Right(DIDRangeD.Cells(Dt, 1).value, 4) = DIDNumber
         If NumericRangeD.Cells(Dt, 1) <> 0 Then
-            paramName = NameRangeD.Cells(Dt, 1).value
+            ParamName = NameRangeD.Cells(Dt, 1).value
             size = CDbl(SizeRangeD.Cells(Dt, 1).value)
             bitOff = BitOffsetRangeD.Cells(Dt, 1).value
             ByteStart = StartRangeD.Cells(Dt, 1).value
@@ -950,7 +953,7 @@ Public Function MinMaxValueLoop(DIDdefValueBin As String, MinMax As String)
             Cells(A, 1).value = A - 1
             Cells(A, SIDColA).value = "$2E"
             Cells(A, IDColA).value = "$" + DIDNumber
-            Cells(A, ServiceColA).value = "WRITE value " + MinMax + " in " + paramName
+            Cells(A, ServiceColA).value = "WRITE value " + MinMax + " in " + ParamName
             Cells(A, SessionColA).value = "100" + CStr(session)
             Cells(A, RequestColA).value = "2E" + DIDNumber + BinToHex(out)
             Cells(A, ResponseColA).value = "6E" + DIDNumber
@@ -958,7 +961,7 @@ Public Function MinMaxValueLoop(DIDdefValueBin As String, MinMax As String)
             Cells(A, 1).value = A - 1
             Cells(A, SIDColA).value = "$22"
             Cells(A, IDColA).value = "$" + DIDNumber
-            Cells(A, ServiceColA).value = "CHECK value " + MinMax + " in " + paramName
+            Cells(A, ServiceColA).value = "CHECK value " + MinMax + " in " + ParamName
             Cells(A, SessionColA).value = "100" + CStr(session)
             Cells(A, RequestColA).value = "22" + DIDNumber
             Cells(A, ResponseColA).value = "62" + DIDNumber + BinToHex(out)
@@ -978,7 +981,7 @@ End Function
 
 Public Function OutOfRangeLoop(DIDdefValueBin As String, UpDownList As String)
 'DIDdefValueBin is a reference good value used as mask for other parameters. will be the default value stored when first computing def for each DID, in public var
-    Dim paramName As String
+    Dim ParamName As String
     Dim Dt As Integer
     Dim res As Double
     Dim off As Double
@@ -992,7 +995,7 @@ Public Function OutOfRangeLoop(DIDdefValueBin As String, UpDownList As String)
     Dim ByteStart As Integer
 
     Do While Right(DIDRangeD.Cells(Dt, 1).value, 4) = DIDNumber
-        paramName = NameRangeD.Cells(Dt, 1).value
+        ParamName = NameRangeD.Cells(Dt, 1).value
         'If InStr(paramName, ".") <> 0 Then
         '    paramName = Right(paramName, Len(paramName) - InStr(paramName, "."))
         'End If
@@ -1007,7 +1010,7 @@ Public Function OutOfRangeLoop(DIDdefValueBin As String, UpDownList As String)
                     For i = 0 To UBound(temp)
                         If InStr(temp(i), "Not Used") <> 0 Then
                             val = CDbl(Left(temp(i), InStr(temp(i), ":") - 1))
-                            Cells(A, ServiceColA).value = "WRITE value NOTUSED " + Str(val) + " in " + paramName 'CHECK using  val in this function, it gets resetted. i don't know why. sending x, goes back as 0...
+                            Cells(A, ServiceColA).value = "WRITE value NOTUSED " + Str(val) + " in " + ParamName 'CHECK using  val in this function, it gets resetted. i don't know why. sending x, goes back as 0...
                             inBin = DecToBin(val, size)
                             Debug.Print (inBin)
                             out = replaceInString(DIDdefValueBin, inBin, (ByteStart - 1) * 8 + bitOff)
@@ -1054,7 +1057,7 @@ Public Function OutOfRangeLoop(DIDdefValueBin As String, UpDownList As String)
                             Cells(A, SIDColA).value = "$2E"
                             Cells(A, IDColA).value = "$" + DIDNumber
                             Cells(A, SessionColA).value = "100" + CStr(session)
-                            Cells(A, ServiceColA).value = "WRITE value OUTOFRANGE " + Str(dec + res) + " in " + paramName
+                            Cells(A, ServiceColA).value = "WRITE value OUTOFRANGE " + Str(dec + res) + " in " + ParamName
                             Cells(A, RequestColA).value = "2E" + DIDNumber + BinToHex(out)
                             Cells(A, ResponseColA).value = "ERROR#2048 : Requested service $2E, Negative reply 31 : Request Out Of Range"
                             A = A + 1
@@ -1068,7 +1071,7 @@ Public Function OutOfRangeLoop(DIDdefValueBin As String, UpDownList As String)
                                 Cells(A, SIDColA).value = "$2E"
                                 Cells(A, IDColA).value = "$" + DIDNumber
                                 Cells(A, SessionColA).value = "100" + CStr(session)
-                                Cells(A, ServiceColA).value = "WRITE value OUTOFRANGE -" + Str(dec + res) + " in " + paramName
+                                Cells(A, ServiceColA).value = "WRITE value OUTOFRANGE -" + Str(dec + res) + " in " + ParamName
                                 Cells(A, RequestColA).value = "2E" + DIDNumber + BinToHex(out)
                                 Cells(A, ResponseColA).value = "ERROR#2048 : Requested service $2E, Negative reply 31 : Request Out Of Range"
                                 A = A + 1
@@ -1081,7 +1084,7 @@ Public Function OutOfRangeLoop(DIDdefValueBin As String, UpDownList As String)
                                 Cells(A, SIDColA).value = "$2E"
                                 Cells(A, IDColA).value = "$" + DIDNumber
                                 Cells(A, SessionColA).value = "100" + CStr(session)
-                                Cells(A, ServiceColA).value = "WRITE value OUTOFRANGE " + Str(dec - res) + " in " + paramName
+                                Cells(A, ServiceColA).value = "WRITE value OUTOFRANGE " + Str(dec - res) + " in " + ParamName
                                 Cells(A, RequestColA).value = "2E" + DIDNumber + BinToHex(out)
                                 Cells(A, ResponseColA).value = "ERROR#2048 : Requested service $2E, Negative reply 31 : Request Out Of Range"
                                 A = A + 1
