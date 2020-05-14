@@ -221,6 +221,20 @@ Public Function CanoeReadDTC(Optional ByVal DTC As String = "", Optional ByVal F
     CanoeReadDTC = temp
 End Function
 
+Public Function CanoeWriteComment(text As String) As String
+    Dim temp As String
+
+    temp = "// " + text
+    CanoeWriteComment = temp
+
+End Function
+
+Public Function CanoeWriteReportComment(text As String) As String
+    Dim temp As String
+    temp = "TestStep(" + Chr(34) + Chr(34) + "," + Chr(34) + text + Chr(34) + ");"
+    CanoeWriteReportComment = temp
+End Function
+
 Public Function CanoeWriteDID(Name As String, hexa As String) As String
     'Find out how to write a DID on CANoe
     'Ouput the line to be written in FileOut to write the DID
@@ -443,4 +457,19 @@ Function IsInArray(stringToBeFound As String, arr As Variant) As Integer
       Exit For
     End If
   Next i
+End Function
+
+Public Function checkParam(readDIDbin As String, maskedDIDbin As String, Optional ByVal mask = "X") As Boolean
+    Dim i As Integer
+    Dim temp As String
+    Dim check As Boolean
+    check = True
+    For i = 1 To Len(maskedDIDbin)
+        If (Right(Left(maskedDIDbin, i), 1) <> mask) Then
+            If (Right(Left(maskedDIDbin, i), 1) <> Right(Left(readDIDbin, i), 1)) Then
+                check = False
+            End If
+        End If
+    Next i
+    checkParam = check
 End Function
