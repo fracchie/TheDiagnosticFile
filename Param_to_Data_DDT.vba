@@ -1,102 +1,30 @@
 Option Explicit
 
 Sub ToData()
-'
-' BetaToData Macro
-
-'Name
-'Mnemo
-'Size (bit)
-'Numeric
-'Size
-'unit
-'res
-'offset
-'Description
-'List
-'Coding
-
-'
-'----------------------------------------------------------------------------------------------------
-'Variables declaration
-'----------------------------------------------------------------------------------------------------
-
-    Dim HeadersRangeD As Range
-    Dim NameRangeD As Range
-    Dim MnemoRangeD As Range
-    Dim SizeRangeD As Range
-    Dim NumericRangeD As Range
-    Dim SignRangeD As Range
-    Dim UnitRangeD As Range
-    Dim ResRangeD As Range
-    Dim OffsetRangeD As Range
-    Dim DescRangeD As Range
-    Dim ListRangeD As Range
-    Dim CodingRangeD As Range
-    Dim ReadRangeD As Range
-    Dim WriteRangeD As Range
-    Dim SnapshotRangeD As Range
-    Dim AsciiHexaRangeD As Range
+    '========= Departure tab ========
+    Worksheets("Parameters").Activate
+    Dim HeadersRangeD As Range: Set HeadersRangeD = Range("Name", Range("Name").End(xlToRight).Address)
+    Dim NameRangeD As Range: Set NameRangeD = Range(HeadersRangeD.Find("DID_Name").Address, HeadersRangeD.Find("DID_Name").End(xlDown))
+    Dim MnemoRangeD As Range: Set MnemoRangeD = Range(HeadersRangeD.Find("DID").Address, HeadersRangeD.Find("DID").End(xlDown))
+    Dim SizeRangeD As Range: Set SizeRangeD = Range(HeadersRangeD.Find("Size (bit)").Address, HeadersRangeD.Find("Size (bit)").End(xlDown))
+    Dim NumericRangeD As Range: Set NumericRangeD = Range(HeadersRangeD.Find("Numeric").Address, HeadersRangeD.Find("Numeric").End(xlDown))
+    Dim SignRangeD As Range: Set SignRangeD = Range(HeadersRangeD.Find("sign").Address, HeadersRangeD.Find("sign").End(xlDown))
+    Dim UnitRangeD As Range: Set UnitRangeD = Range(HeadersRangeD.Find("unit").Address, HeadersRangeD.Find("unit").End(xlDown))
+    Dim ResRangeD As Range: Set ResRangeD = Range(HeadersRangeD.Find("resolution").Address, HeadersRangeD.Find("resolution").End(xlDown))
+    Dim OffsetRangeD As Range: Set OffsetRangeD = Range(HeadersRangeD.Find("Value offset").Address, HeadersRangeD.Find("Value offset").End(xlDown))
+    Dim DescRangeD As Range: Set DescRangeD = Range(HeadersRangeD.Find("Description").Address, HeadersRangeD.Find("Description").End(xlDown))
+    Dim ListRangeD As Range: Set ListRangeD = Range(HeadersRangeD.Find("List").Address, HeadersRangeD.Find("List").End(xlDown))
+    Dim CodingRangeD As Range: Set CodingRangeD = Range(HeadersRangeD.Find("Coding", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=False).Address, HeadersRangeD.Find("Coding").End(xlDown))
+    Dim ReadRangeD As Range: Set ReadRangeD = Range(HeadersRangeD.Find("Read by DID").Address, HeadersRangeD.Find("Read by DID").End(xlDown))
+    Dim WriteRangeD As Range: Set WriteRangeD = Range(HeadersRangeD.Find("Write by DID").Address, HeadersRangeD.Find("Write by DID").End(xlDown))
+    Dim SnapshotRangeD As Range: Set SnapshotRangeD = Range(HeadersRangeD.Find("Snapshots").Address, HeadersRangeD.Find("Snapshots").End(xlDown))
+    Dim AsciiHexaRangeD As Range: Set AsciiHexaRangeD = Range(HeadersRangeD.Find("ASCII|HEXA").Address, HeadersRangeD.Find("ASCII|HEXA").End(xlDown))
     Dim DID As String
     Dim Reso As Long, CoefC As Long, off As Long
     Dim DecReso As Integer
     Dim DecOff As Integer
-
-
-    '"Arrival" sheet :toDATA
-    Dim NameColA As Integer
-    Dim MnemoColA As Integer
-    Dim SizeColA As Integer
-    Dim SignColA As Integer
-    Dim UnitColA As Integer
-    Dim CoefAColA As Integer
-    Dim CoefBColA As Integer
-    Dim CoefCColA As Integer
-    Dim DescColA As Integer
-    Dim NumericColA As Integer
-    Dim ListColA As Integer
-    Dim HeadersRangeA As Range
-    Dim list() As String, value As String, Label As String, l As Integer
-    Dim A As Integer, D As Integer
-    Dim Color
+    '============================== Arrival sheet :toDATA
     Dim Sheet As Worksheet
-    Dim Cell As Range
-
-'----------------------------------------------------------------------------------------------------
-  Worksheets("Parameters").Activate
-'----------------------------------------------------------------------------------------------------
-''look for the specific headers defining a DDT data, stored in the ListHeaders.
-' find where headers are written, and define the headers row
-    'Range("HeaderRowD", Range("HeaderRowD").End(xlToRight).Address).Select
-    'Range("HeadersRangeD").EntireRow.
-
-    'Set HeadersRangeD = Range("HeadersRangeD", Range("HeadersRangeD").End(xlToRight).Address)
-    Set HeadersRangeD = Range("Name", Range("Name").End(xlToRight).Address)
-'    HeadersRangeD.Select
-    'would like to format the whole thing as a tab, and maybe formatting the headers as text
-    'Find the needed columns in the header list. By default is NOT CASE SENSITIVE
-    'HeadersRangeD.Find("Name").Select
-    Set NameRangeD = Range(HeadersRangeD.Find("Name").Address, HeadersRangeD.Find("Name").End(xlDown))
-    Set MnemoRangeD = Range(HeadersRangeD.Find("DID").Address, HeadersRangeD.Find("DID").End(xlDown))
-    Set SizeRangeD = Range(HeadersRangeD.Find("Size (bit)").Address, HeadersRangeD.Find("Size (bit)").End(xlDown))
-    Set NumericRangeD = Range(HeadersRangeD.Find("Numeric").Address, HeadersRangeD.Find("Numeric").End(xlDown))
-    Set SignRangeD = Range(HeadersRangeD.Find("sign").Address, HeadersRangeD.Find("sign").End(xlDown))
-    Set UnitRangeD = Range(HeadersRangeD.Find("unit").Address, HeadersRangeD.Find("unit").End(xlDown))
-    Set ResRangeD = Range(HeadersRangeD.Find("resolution").Address, HeadersRangeD.Find("resolution").End(xlDown))
-    Set OffsetRangeD = Range(HeadersRangeD.Find("Value offset").Address, HeadersRangeD.Find("Value offset").End(xlDown))
-    Set DescRangeD = Range(HeadersRangeD.Find("Description").Address, HeadersRangeD.Find("Description").End(xlDown))
-    Set ListRangeD = Range(HeadersRangeD.Find("List").Address, HeadersRangeD.Find("List").End(xlDown))
-    Set CodingRangeD = Range(HeadersRangeD.Find("Coding", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=False).Address, HeadersRangeD.Find("Coding").End(xlDown))
-    Set ReadRangeD = Range(HeadersRangeD.Find("Read by DID").Address, HeadersRangeD.Find("Read by DID").End(xlDown))
-    Set WriteRangeD = Range(HeadersRangeD.Find("Write by DID").Address, HeadersRangeD.Find("Write by DID").End(xlDown))
-    Set SnapshotRangeD = Range(HeadersRangeD.Find("Snapshots").Address, HeadersRangeD.Find("Snapshots").End(xlDown))
-    Set AsciiHexaRangeD = Range(HeadersRangeD.Find("ASCII|HEXA").Address, HeadersRangeD.Find("ASCII|HEXA").End(xlDown))
-
-
-'----------------------------------------------------------------------------------------------------
-'"Arrival" sheet : BetaToDID
-'----------------------------------------------------------------------------------------------------
-
     For Each Sheet In ThisWorkbook.Worksheets
         If Sheet.Name Like "ToData" Then
             Application.DisplayAlerts = False
@@ -109,23 +37,30 @@ Sub ToData()
             ActiveSheet.Name = "ToData"
         End If
     Next Sheet
-    'Work on the "BetaToData" sheet
     Worksheets("ToData").Activate
-
-    'Define  the columns containing the Arrival data, by default
-    NameColA = 1
-    MnemoColA = 2
-    SizeColA = 3
-    SignColA = 4
-    UnitColA = 5
-    CoefAColA = 6
-    CoefBColA = 7
-    CoefCColA = 8
-    DescColA = 9
-    ListColA = 10
+    Dim A As Integer
+    A = 1
+    Dim NameColA As Integer: NameColA = 1: Call formatCell(A, NameColA, "Parameter_name", True, , , "THICK", "ORANGE", 40, 20)
+    Dim MnemoColA As Integer: MnemoColA = 2: Call formatCell(A, MnemoColA, "Mnemo", True, , , "THICK", "ORANGE", 10, 20)
+    Dim SizeColA As Integer: SizeColA = 3: Call formatCell(A, SizeColA, "Size (bit)", True, , , "THICK", "ORANGE", 10, 20)
+    Dim SignColA As Integer: SignColA = 4: Call formatCell(A, SignColA, "Sign", True, , , "THICK", "ORANGE", 10, 20)
+    Dim UnitColA As Integer: UnitColA = 5: Call formatCell(A, UnitColA, "Unit", True, , , "THICK", "ORANGE", 10, 20)
+    Dim CoefAColA As Integer: CoefAColA = 6: Call formatCell(A, CoefAColA, "Coef A", True, , , "THICK", "ORANGE", 10, 20)
+    Dim CoefBColA As Integer: CoefBColA = 7: Call formatCell(A, CoefBColA, "Coef B", True, , , "THICK", "ORANGE", 10, 20)
+    Dim CoefCColA As Integer: CoefCColA = 8: Call formatCell(A, CoefCColA, "Coef C", True, , , "THICK", "ORANGE", 10, 20)
+    Dim DescColA As Integer: DescColA = 9: Call formatCell(A, DescColA, "Description", True, , , "THICK", "ORANGE", 40, 20)
+    Dim NumericColA As Integer
+    Dim ListColA As Integer: ListColA = 10: Call formatCell(A, ListColA, "List", True, , , "THICK", "ORANGE", 10, 20)
+    Dim HeadersRangeA As Range
+    Dim list() As String
+    Dim value As String
+    Dim Label As String
+    Dim l As Integer
+    Dim D As Integer
+    Dim Cell As Range
 
     '----------------------------------------------------------------------------------------
-    'Headers
+    'Headers -> can be replaced by new function  GFL.formatCell
     '----------------------------------------------------------------------------------------
     A = 1
     Cells(A, NameColA).value = "Parameter_name"
@@ -138,92 +73,51 @@ Sub ToData()
     Cells(A, CoefCColA).value = "Coef C"
     Cells(A, DescColA).value = "Description"
     Cells(A, ListColA).value = "List"
-
-    'Format
-    'Format:Columns width
-    Columns(NameColA).ColumnWidth = 40
-    Columns(MnemoColA).ColumnWidth = 11
     Columns(MnemoColA).NumberFormat = "@"
-    Columns(SizeColA).ColumnWidth = 9
-    Columns(SignColA).ColumnWidth = 9
-    Columns(UnitColA).ColumnWidth = 12
-    Columns(CoefAColA).ColumnWidth = 9
-    Columns(CoefBColA).ColumnWidth = 9
-    Columns(CoefCColA).ColumnWidth = 9
-    Columns(DescColA).ColumnWidth = 35
-    Columns(ListColA).ColumnWidth = 10
+    Columns.NumberFormat = "@"
     'Limit the height of rows
 '    Range(Columns(StartColA), Columns(RefColA)).ColumnWidth = 14
 '    'Format:interior color
     Set HeadersRangeA = Range(Cells(A, NameColA), Cells(A, ListColA))
-    HeadersRangeA.Interior.Color = RGB(255, 192, 0)
-    HeadersRangeA.RowHeight = 30
-    HeadersRangeA.Font.Bold = 1
-    HeadersRangeA.HorizontalAlignment = xlCenter
-    HeadersRangeA.VerticalAlignment = xlCenter
-    Columns("A:J").HorizontalAlignment = xlCenter
-
-    'Format:Borders
-    HeadersRangeA.borders(xlEdgeBottom).Color = RGB(0, 0, 0)
-    HeadersRangeA.borders(xlEdgeLeft).Color = RGB(0, 0, 0)
-    HeadersRangeA.borders(xlEdgeRight).Color = RGB(0, 0, 0)
-    HeadersRangeA.borders(xlEdgeTop).Color = RGB(0, 0, 0)
-    HeadersRangeA.borders(xlInsideVertical).Color = RGB(0, 0, 0)
-
+    'for changing all the header format
+    'HeadersRangeA.Interior.Color = RGB(255, 192, 0)
+    'HeadersRangeA.RowHeight = 30
+    'HeadersRangeA.Font.Bold = 1
+    'HeadersRangeA.HorizontalAlignment = xlCenter
+    'HeadersRangeA.VerticalAlignment = xlCenter
+    'Columns("A:J").HorizontalAlignment = xlCenter
+    ''Format:Borders
+    'HeadersRangeA.borders(xlEdgeBottom).Color = RGB(0, 0, 0)
+    'HeadersRangeA.borders(xlEdgeLeft).Color = RGB(0, 0, 0)
+    'HeadersRangeA.borders(xlEdgeRight).Color = RGB(0, 0, 0)
+    'HeadersRangeA.borders(xlEdgeTop).Color = RGB(0, 0, 0)
+    'HeadersRangeA.borders(xlInsideVertical).Color = RGB(0, 0, 0)                                        
+'----------------------------------------------------------------------------------------------------
+'"Arrival" sheet : BetaToDID
+'----------------------------------------------------------------------------------------------------
     A = 2
     D = 2
-
-
      For Each Cell In NameRangeD.Cells 'name format DID_name.param -> structure data, or just data_name if one-param DID
         Rows(A).RowHeight = 17
-        'Rows(A).WrapText 'TO ADD
-        If NameRangeD.Cells(D, 1) = 0 Then 'Temporary. Find a way to iterate one time less. It counts another cell after. Was trying with for D = 2 to NameRangeD.Count (-1 in case) but still some bug. keep trying
+        If NameRangeD.Cells(D, 1) = 0 Then 'Temporary. Find A way to iterate one time less. It counts another cell after. Was trying with for D = 2 to NameRangeD.Count (-1 in case) but still some bug. keep trying
         Else
             Cells(A, NameColA).value = NameRangeD.Cells(D, 1).value
             Debug.Print (NameRangeD.Cells(D, 1).value)
             Cells(A, MnemoColA).value = MnemoRangeD.Cells(D, 1).value
             Cells(A, SizeColA).value = SizeRangeD.Cells(D, 1).value
             Cells(A, DescColA).value = DescRangeD.Cells(D, 1).value
-
-
             If NumericRangeD.Cells(D, 1).value <> 0 Then
                 If SignRangeD.Cells(D, 1).value = "s" Then
                     Cells(A, SignColA).value = 1
                 Else
                     Cells(A, SignColA).value = 0
                 End If
-
                 Cells(A, UnitColA).value = UnitRangeD.Cells(D, 1).value
-
-                'New version (V2)
                 Debug.Print (ResRangeD.Cells(D, 1).value)
                 Debug.Print (OffsetRangeD.Cells(D, 1).value)
-
                 Cells(A, CoefAColA).value = ResRangeD.Cells(D, 1).value
                 Cells(A, CoefBColA).value = OffsetRangeD.Cells(D, 1).value
                 Cells(A, CoefCColA).value = 1 'always 1 for the moment. Still have to analyse its effect
-
-                'Old (V1.3) version of A,B,C coeff calculation. was not working properly
-'                Coef C
-'                Reso = ResRangeD.Cells(D, 1).Value
-'                off = OffsetRangeD.Cells(D, 1).Value
-'                If InStr(Reso, ",") <> 0 Then
-'                    DecReso = Len(Right(Reso, Len(Reso) - (InStr(Reso, ","))))
-'                Else: DecReso = 0
-'                End If
-'                If InStr(off, ",") <> 0 Then
-'                    DecOff = Len(Right(off, Len(off) - (InStr(off, ","))))
-'                Else: DecOff = 0
-'                End If
-'                If DecReso >= DecOff Then
-'                    CoefC = 10 ^ DecReso
-'                Else: CoefC = 10 ^ DecOff
-'                End If
-'                Cells(A, CoefCColA).Value = CoefC
-'                'Coef A
-'                Cells(A, CoefAColA).Value = Reso * CoefC
-'                'Coef B
-'                Cells(A, CoefBColA).Value = off * CoefC
 
             ElseIf ListRangeD.Cells(D, 1).value <> 0 Then
                 Cells(A, ListColA).value = "List"
@@ -231,18 +125,15 @@ Sub ToData()
                 Cells(A, CoefAColA).value = 1
                 Cells(A, CoefBColA).value = 0
                 Cells(A, CoefCColA).value = 1
-
                 A = A + 1
                 Cells(A, MnemoColA).value = "Value"
                 Cells(A, SizeColA).value = "label"
                 list = Split(CodingRangeD.Cells(D, 1), vbLf)
-                l = 0
                 For l = 0 To UBound(list)
-                    If InStr(list(l), "Not Used") <> 0 Then
+                    If (InStr(list(l), "Not Used") = 0) Then 'avoid creating values for Not Used
                         A = A + 1
-    '                    Debug.Print (List(l))
-                        Cells(A, MnemoColA).value = Left(list(l), InStr(list(l), "=") - 1)
-                        Cells(A, SizeColA).value = Right(list(l), Len(list(l)) - InStr(list(l), "="))
+                        Cells(A, MnemoColA).value = Left(list(l), InStr(list(l), ":") - 1)
+                        Cells(A, SizeColA).value = Right(list(l), Len(list(l)) - InStr(list(l), ":"))
     '                    Label = Right(List(L), Len(List(L)) - InStr(List(L), "="))
     '                    Cells(A, SizeColA).Value = Label
     '                       Cells(A, MnemoColA).Value = Split(List(L), "=")
@@ -253,69 +144,10 @@ Sub ToData()
                 Next l
             ElseIf AsciiHexaRangeD.Cells(D, 1).value <> 0 Then
                 Cells(A, ListColA).value = AsciiHexaRangeD.Cells(D, 1).value
-
             End If
-
-
-    '        If DIDRangeD.Cells(D, 1) = 0 Then
-    '
-    '        'if new DID
-    '        ElseIf DIDRangeD.Cells(D, 1) <> DIDRangeD.Cells(D - 1, 1) Then 'if first voice of new DID
-    '
-    '
-    '            If Not (TypeName(DIDRangeD.Cells(D, 1).Value) Like "String") Then
-    '                    DID = Str(DIDRangeD.Cells(D, 1).Value)
-    '            Else
-    '                DID = DIDRangeD.Cells(D, 1).Value
-    '            End If
-    '
-    ''            DID = Replace(DID, "0113", " ")
-    ''            DID = Replace(DID, " ", "")
-    '            Debug.Print (DID)
-    '            Debug.Print (InStr(DID, "$"))
-    '            DID = Replace(DID, "$", "")
-    '
-    '
-    '            Cells(A, MnemoColA).Value = DIDRangeD.Cells(D, 1).Value
-    '            Cells(A, ParamColA).Value = 4
-    '            Cells(A, StartColA).Value = LengthRangeD.Cells(D, 1).Value
-    '            Cells(A, EndianColA).Value = 0
-    '
-    '           'if is a DID containing several data -> create first line DID in Arrival sheet
-    '            If InStr(NameRangeD.Cells(D, 1).Value, ".") <> 0 Then
-    '
-    '                Cells(A, NameColA).Value = Left(NameRangeD.Cells(D, 1).Value, InStr(NameRangeD.Cells(D, 1).Value, ".") - 1)
-    '            'otherwise it is a DID with just one data
-    '            Else
-    '                Cells(A, NameColA).Value = NameRangeD.Cells(D, 1).Value
-    '
-    '            End If
-    '
-    '            A = A + 1
-    '            Cells(A, MnemoColA).Value = "record"
-    '            Cells(A, ParamColA).Value = Right(NameRangeD.Cells(D, 1).Value, Len(NameRangeD.Cells(D, 1).Value) - InStr(NameRangeD.Cells(D, 1).Value, "."))
-    '            Cells(A, StartColA).Value = StartRangeD.Cells(D, 1).Value + 3
-    '            Cells(A, OffColA).Value = OffsetRangeD.Cells(D, 1).Value
-    '            Cells(A, EndianColA).Value = 0
-    '            Cells(A, RefColA).Value = 1
-    '
-    '
-    '        'or if nth record of same DID
-    '        Else
-    '            Cells(A, MnemoColA).Value = "record"
-    '            Cells(A, ParamColA).Value = Right(NameRangeD.Cells(D, 1).Value, Len(NameRangeD.Cells(D, 1).Value) - InStr(NameRangeD.Cells(D, 1).Value, "."))
-    '            Cells(A, StartColA).Value = StartRangeD.Cells(D, 1).Value + 3 'there is an offset of -3 in
-    '            Cells(A, OffColA).Value = OffsetRangeD.Cells(D, 1).Value
-    '            Cells(A, EndianColA).Value = 0
-    '            Cells(A, RefColA).Value = 1
-    '
-            End If
-
+        End If
         D = D + 1
         A = A + 1
     Next Cell
-
     Range("A2", Cells(A - 2, ListColA)).Select
-
-
 End Sub
