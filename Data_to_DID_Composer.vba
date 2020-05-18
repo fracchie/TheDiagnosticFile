@@ -9,8 +9,8 @@ Sub DIDcompMacro()
     Dim BitRange As Range
     Dim LengthRange As Range
     Dim ByteStart As Integer
-    Dim BitOff As Integer
-    Dim Length As Integer
+    Dim bitOff As Integer
+    Dim length As Integer
     Dim i As Integer
     Dim Cell As Range
     Dim bits As Integer
@@ -53,13 +53,13 @@ Sub DIDcompMacro()
     Next Cell
 
         param = 2
-        Length = bits \ 8
+        length = bits \ 8
         If bits Mod 8 Then
-            Length = Length + 1
+            length = length + 1
         End If
 
         For param = 2 To (i - 1)
-            LengthRange.Cells(param, 1) = Length
+            LengthRange.Cells(param, 1) = length
             LengthRange.Cells(param, 1).Interior.Color = RGB(255, 255, 0)
             LengthRange.Cells(param, 1).HorizontalAlignment = xlCenter
         Next param

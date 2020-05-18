@@ -70,7 +70,7 @@ Debug.Print ("")
 '           Setup
 '============================================================================================================================================================================================================================================================================================
 
-    Workbooks("TheDiagnosticFile_V11error").Activate 'use that when debugging with several workbooks open, to avoid any bullshit. comment/remove it when not debugging anymore
+    'Workbooks("TheDiagnosticFile_V11error").Activate 'use that when debugging with several workbooks open, to avoid any bullshit. comment/remove it when not debugging anymore
     Worksheets("TdR").Activate
     '----------------------------------------------------------------------------------------------------
     'Variables declaration and init
@@ -580,7 +580,7 @@ End Function
 
 Public Function ProcessSignalReaction()
     Dim D As Integer
-    Dim a As Integer
+    Dim A As Integer
     Dim temp() As String
     ReDim SignalReactionListed(0)
     'SignalReactionBrur in the format
@@ -589,10 +589,10 @@ Public Function ProcessSignalReaction()
     'SignalReactionListed: Format of each line: $signal = value
 
     temp = Split(SignalReactionsBrut, vbLf)
-    a = 0
+    A = 0
     For D = 0 To UBound(temp)
         Debug.Print (temp(D))
-        Debug.Print (Str(a))
+        Debug.Print (Str(A))
         If InStr(temp(D), "=") = False Then 'It means it is a reaction set
             Worksheets("System_Reaction").Activate
             Dim HeaderRangeSys As Range: Set HeaderRangeSys = Range(Range("SysSignalName").Address, Range("SysSignalName").End(xlToRight).Address)
@@ -608,18 +608,18 @@ Public Function ProcessSignalReaction()
                 If ReactionNameRangeSys(jthCell, 1) <> 0 Then
                     signal = SignalNameRangeSys.Cells(jthCell, 1).value
                     value = ReactionNameRangeSys.Cells(jthCell, 1).value
-                    ReDim Preserve SignalReactionListed(a + jthSignal)
-                    SignalReactionListed(a + jthSignal) = "$" + signal + " = " + value 'TODO associative arrays vba?
-                    Debug.Print ("SignalReactionList(" + Str(a + jthSignal) + "): " + SignalReactionListed(a + jthSignal))
-                    a = a + 1
+                    ReDim Preserve SignalReactionListed(A + jthSignal)
+                    SignalReactionListed(A + jthSignal) = "$" + signal + " = " + value 'TODO associative arrays vba?
+                    Debug.Print ("SignalReactionList(" + Str(A + jthSignal) + "): " + SignalReactionListed(A + jthSignal))
+                    A = A + 1
                     jthSignal = jthSignal + 1
                 End If
             Next jthCell
         Else '&Signal = value
-            ReDim Preserve SignalReactionListed(a)
-            SignalReactionListed(a) = temp(D)
-            Debug.Print ("SignalReactionList(" + Str(a) + "): " + SignalReactionListed(a))
-            a = a + 1
+            ReDim Preserve SignalReactionListed(A)
+            SignalReactionListed(A) = temp(D)
+            Debug.Print ("SignalReactionList(" + Str(A) + "): " + SignalReactionListed(A))
+            A = A + 1
         End If
 
   Next D

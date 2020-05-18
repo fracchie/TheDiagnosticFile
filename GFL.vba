@@ -56,32 +56,37 @@ Public Function CreateExtFile(fileName As String, Optional ByVal Path As String 
 
 End Function
 
-Public Function BinToDec(bin As String, ConvMode As Integer) As Double
-
+Public Function BinToDec(bin As String, Optional ByVal sign As Boolean = False, Optional ByVal ConvMode As Integer = 0, Optional ByVal res As Double = 1, Optional ByVal off As Double = 0) As Double
     Dim i As Integer
-    BinToDec = 0
-
-    'Conversion following this https://www.youtube.com/watch?v=2tzBCzW-4Qc
-
-    For i = Len(bin) To 2 Step -1
-        If Mid(bin, i, 1) = "1" Then
-            BinToDec = BinToDec + 2 ^ (Len(bin) - i)
-
+    Dim temp As String
+    temp = ""
+    'TODO management of sign!
+    If sign = False Then
+        For i = Len(bin) To 1 Step -1
+            If Mid(bin, i, 1) = "1" Then
+                BinToDec = BinToDec + 2 ^ (Len(bin) - i)
+            End If
+        Next i
+        BinToDec = BinToDec * res + off
+    Else 'signed value
+        If (ConvMode = 2) Then '2 complement
+            If (Mid(bin, 1, 1) = "1") Then
+                BinToDec = BinToDec - (2 ^ (Len(bin) - 1))
+            End If
+        ElseIf (ConvMode = 1) Then
+            'TODO 1 complement
+        Else 'ConvMode 0 = MSB sign carrier
+            If Left(bin, 1) = "1" Then
+                temp = "-"
+            End If
+            For i = Len(bin) To 2 Step -1
+                If Mid(bin, i, 1) = "1" Then
+                    temp = temp + CDbl(2 ^ (Len(bin) - i))
+                End If
+            Next i
+            BinToDec = CDbl(temp)
         End If
-
-    Next i
-
-    If (ConvMode = 2) Then '2 complement
-        If (Mid(bin, 1, 1) = "1") Then
-            BinToDec = BinToDec - (2 ^ (Len(bin) - 1))
-        End If
-    ElseIf (ConvMode = 1) Then
-    'TODO 1 complement
-    Else
-        'ConvMode 0 = MSB sign carrier
-        BinToDec = BinToDec + BinToDec + 2 ^ (Len(bin) - 1)
     End If
-
 End Function
 
 Public Function HexToBin(Hex As String) As String
@@ -138,28 +143,45 @@ Public Function HexToBin(Hex As String) As String
 
 End Function
 
-Public Function DecToBin(dec As Variant, NumBit As Integer, Optional ByVal res As Variant = 1, Optional ByVal off As Double = 0) As String
+Public Function DecToBin(dec As String, NumBit As Integer, Optional ByVal sign As Boolean = False, Optional ByVal ConvMode As Integer = 0, Optional ByVal res As String = "1", Optional ByVal off As String = "0") As String
 ' converts a decimal number in a binary value in n bit
-'think about the resolution
     Dim i As Integer
-    If dec <> 0 Then
-'        Debug.Print ("res")
-'        Debug.Print (res)
-        'TODO bug fixing. Temporarly:
-        If res = 0 Then
-            res = 1
-        End If
-        dec = dec / res
+    Dim temp As String
+    temp = ""
+    dec = CDbl(dec) 'changed argument into string, because need to reduce math that would lead to approximation -> here a 6 may get 5.99999 fucking up the whole algorithm
+    dec = (dec - off) / res
+    If sign = False Then
+        For i = NumBit - 1 To 0 Step -1 'countdown
+            If Int(dec / (2 ^ i)) > 0 Then
+                temp = temp + "1"
+                dec = dec - (2 ^ i)
+            Else
+                temp = temp + "0"
+            End If
+        Next i
+    Else 'signed value
+        Select Case ConvMode
+            Case 0
+                If dec < 0 Then
+                    dec = Abs(dec)
+                    NumBit = NumBit - 1
+                    temp = "1"
+                End If
+                For i = NumBit - 1 To 0 Step -1 'countdown
+                    If Int(dec / (2 ^ i)) > 0 Then
+                        temp = temp + "1"
+                        dec = dec - (2 ^ i)
+                    Else
+                        temp = temp + "0"
+                    End If
+                Next i
+            Case 1
+                'TODO
+            Case 2
+                'TODO
+        End Select
     End If
-    dec = dec - off
-    For i = NumBit - 1 To 0 Step -1 'countdown
-        If Int(dec / (2 ^ i)) > 0 Then
-            DecToBin = DecToBin + "1"
-            dec = dec - (2 ^ i)
-        Else
-            DecToBin = DecToBin + "0"
-        End If
-    Next i
+    DecToBin = temp
 End Function
 
 Public Function BinToHex(Binary As String) As String
