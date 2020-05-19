@@ -840,6 +840,7 @@ Public Function MinMaxValueLoop(DIDdefValueBin As String, MinMax As String)
     Dim size As Integer
     Dt = D
     Dim inBin As String
+    inBin = ""
     Dim out As String
     Dim bitOff As Integer
     Dim ByteStart As Integer
@@ -871,7 +872,7 @@ Public Function MinMaxValueLoop(DIDdefValueBin As String, MinMax As String)
                 End If
             End If
 
-            inBin = DecToBin(Str(dec), size, , , res, off)
+            inBin = inBin + DecToBin(Str(dec), size, , , res, off)
             out = replaceInString(DIDdefValueBin, inBin, (ByteStart - 1) * 8 + bitOff)
             Cells(A, 1).value = A - 1
             Cells(A, SIDColA).value = "$2E"
@@ -974,8 +975,7 @@ Public Function OutOfRangeLoop(DIDdefValueBin As String, UpDownList As String)
                         End If
                     End If
                     If UpDownList = "UP" Then
-                        'TODO differentiate signed and unsigned!
-                        If dec <> (((2 ^ size) - 1 - off) / res) Then 'Can go out of range
+                        If dec <> (((2 ^ size) - 1 + off) * res) Then 'Can go out of range
                             inBin = inBin + DecToBin(dec + res, size, , , res, off)
                             out = replaceInString(DIDdefValueBin, inBin, (ByteStart - 1) * 8 + bitOff)
                             Cells(A, 1).value = A - 1
@@ -989,7 +989,8 @@ Public Function OutOfRangeLoop(DIDdefValueBin As String, UpDownList As String)
                         End If
                     Else 'DOWN
                         If SignRangeD.Cells(Dt, 1) = "s" Then
-                            If dec < (((2 ^ size - 1) / res - off)) Then 'dec is already in abs value, and size has been reduced by one because of the sign
+                            'for upper threshold not needed to differentiate sign and unsigned. here i don't see how to differentiate the lower threshold
+                            If dec < (((2 ^ size - 1) + off) * res) Then  'dec is already in abs value, and size has been reduced by one because of the sign
                                 inBin = inBin + DecToBin(dec + res, size, res, off)
                                 out = replaceInString(DIDdefValueBin, inBin, (ByteStart - 1) * 8 + bitOff)
                                 Cells(A, 1).value = A - 1
