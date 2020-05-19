@@ -306,9 +306,9 @@ Debug.Print ("")
                     'Read Def value
                     If (ReadRangeD.Cells(D, 1).value <> 0) Then
                         If (IgnoreDef = True) Then
-                            Call DIDValStep("READ", "DEF", "IGNORE") 'TODO const READ etc
+                            Call DIDValStep("CHECK", "DEF", "IGNORE") 'TODO const READ etc
                         Else
-                            Call DIDValStep("READ", "DEF")
+                            Call DIDValStep("CHECK", "DEF")
                         End If
                     End If
 
@@ -348,15 +348,11 @@ Debug.Print ("")
                         ElseIf ReadRangeD.Cells(D, 1).value = "X" Then
                             Call DIDValStep("WRITE", "DEF", "READONLY")
                         Else 'just a snapshot? do nothing
-
                         End If
                     End If
                 End If
-
             Next D
-
         End If
-
     Next session
 
 '$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -877,6 +873,7 @@ Public Function MinMaxValueLoop(DIDdefValueBin As String, MinMax As String)
             Cells(A, 1).value = A - 1
             Cells(A, SIDColA).value = "$2E"
             Cells(A, IDColA).value = "$" + DIDNumber
+            Cells(A, ServiceColA).value = Cells(A, ServiceColA).value + " -> " + inBin
 
             Cells(A, SessionColA).value = "100" + CStr(session)
             Cells(A, RequestColA).value = "2E" + DIDNumber + BinToHex(out)
@@ -885,19 +882,20 @@ Public Function MinMaxValueLoop(DIDdefValueBin As String, MinMax As String)
             Cells(A, 1).value = A - 1
             Cells(A, SIDColA).value = "$22"
             Cells(A, IDColA).value = "$" + DIDNumber
-            Cells(A, ServiceColA).value = "CHECK value " + MinMax + " in " + ParamName + " -> " + inBin
+            Cells(A, ServiceColA).value = "CHECK value " + MinMax + " in " + ParamName
             Cells(A, SessionColA).value = "100" + CStr(session)
             Cells(A, RequestColA).value = "22" + DIDNumber
             Cells(A, ResponseColA).value = "62" + DIDNumber + BinToHex(out)
             A = A + 1
-            Cells(A, 1).value = A - 1
-            Cells(A, SIDColA).value = "$2E"
-            Cells(A, IDColA).value = "$" + DIDNumber
-            Cells(A, ServiceColA).value = "WRITE back value DEF in " + DIDName
-            Cells(A, SessionColA).value = "100" + CStr(session)
-            Cells(A, RequestColA).value = "2E" + DIDNumber + BinToHex(DIDdefValueBin)
-            Cells(A, ResponseColA).value = "6E" + DIDNumber
-            A = A + 1
+            'Removed because should not be needed. next step will be anyway writing all at default value, just changing the specific param
+            'Cells(A, 1).value = A - 1
+            'Cells(A, SIDColA).value = "$2E"
+            'Cells(A, IDColA).value = "$" + DIDNumber
+            'Cells(A, ServiceColA).value = "WRITE back value DEF in " + DIDName
+            'Cells(A, SessionColA).value = "100" + CStr(session)
+            'Cells(A, RequestColA).value = "2E" + DIDNumber + BinToHex(DIDdefValueBin)
+            'Cells(A, ResponseColA).value = "6E" + DIDNumber
+            'A = A + 1
         End If
         Dt = Dt + 1
     Loop
