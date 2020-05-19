@@ -185,9 +185,12 @@ Sub PValXML()
 
     'Format: Columns width
 
-    Columns(ServiceColA).ColumnWidth = 50
+    Columns(ServiceColA).ColumnWidth = 100
     'Columns("A:J").NumberFormat = "@"
-    Range(Columns(5), Columns(7)).ColumnWidth = 5
+    Range(Columns(5), Columns(7)).ColumnWidth = 1
+    Columns(SIDColA).ColumnWidth = 6
+    Columns(IDColA).ColumnWidth = 7
+    Columns(SessionColA).ColumnWidth = 7
     Columns(RequestColA).ColumnWidth = 40
     Columns(ResponseColA).ColumnWidth = 40
     'Format:interior color
@@ -931,7 +934,7 @@ Public Function OutOfRangeLoop(DIDdefValueBin As String, UpDownList As String)
                     For i = 0 To UBound(temp)
                         If InStr(temp(i), "Not Used") <> 0 Then
                             val = CDbl(Left(temp(i), InStr(temp(i), ":") - 1))
-                            Cells(A, ServiceColA).value = "WRITE value NOTUSED " + Str(val) + " in " + ParamName 'CHECK using  val in this function, it gets resetted. i don't know why. sending x, goes back as 0...
+
                             inBin = DecToBin(Str(val), size)
                             'Debug.Print (inBin)
                             out = replaceInString(DIDdefValueBin, inBin, (ByteStart - 1) * 8 + bitOff)
@@ -940,7 +943,7 @@ Public Function OutOfRangeLoop(DIDdefValueBin As String, UpDownList As String)
                             Cells(A, SIDColA).value = "$2E"
                             Cells(A, IDColA).value = "$" + DIDNumber
                             Cells(A, SessionColA).value = "100" + CStr(session)
-
+                            Cells(A, ServiceColA).value = "WRITE value NOTUSED " + Str(val) + " in " + ParamName + " -> " + inBin
                             Cells(A, RequestColA).value = "2E" + DIDNumber + BinToHex(out)
                             Cells(A, ResponseColA).value = "ERROR#2048 : Requested service $2E, Negative reply 31 : Request Out Of Range"
                             A = A + 1
@@ -971,6 +974,7 @@ Public Function OutOfRangeLoop(DIDdefValueBin As String, UpDownList As String)
                         End If
                     End If
                     If UpDownList = "UP" Then
+                        'TODO differentiate signed and unsigned!
                         If dec <> (((2 ^ size) - 1 - off) / res) Then 'Can go out of range
                             inBin = inBin + DecToBin(dec + res, size, , , res, off)
                             out = replaceInString(DIDdefValueBin, inBin, (ByteStart - 1) * 8 + bitOff)
@@ -978,7 +982,7 @@ Public Function OutOfRangeLoop(DIDdefValueBin As String, UpDownList As String)
                             Cells(A, SIDColA).value = "$2E"
                             Cells(A, IDColA).value = "$" + DIDNumber
                             Cells(A, SessionColA).value = "100" + CStr(session)
-                            Cells(A, ServiceColA).value = "WRITE value OUTOFRANGE " + Str(dec + res) + " in " + ParamName
+                            Cells(A, ServiceColA).value = "WRITE value OUTOFRANGE " + Str(dec + res) + " in " + ParamName + " -> " + inBin
                             Cells(A, RequestColA).value = "2E" + DIDNumber + BinToHex(out)
                             Cells(A, ResponseColA).value = "ERROR#2048 : Requested service $2E, Negative reply 31 : Request Out Of Range"
                             A = A + 1
@@ -992,7 +996,7 @@ Public Function OutOfRangeLoop(DIDdefValueBin As String, UpDownList As String)
                                 Cells(A, SIDColA).value = "$2E"
                                 Cells(A, IDColA).value = "$" + DIDNumber
                                 Cells(A, SessionColA).value = "100" + CStr(session)
-                                Cells(A, ServiceColA).value = "WRITE value OUTOFRANGE -" + Str(dec + res) + " in " + ParamName
+                                Cells(A, ServiceColA).value = "WRITE value OUTOFRANGE -" + Str(dec + res) + " in " + ParamName + " -> " + inBin
                                 Cells(A, RequestColA).value = "2E" + DIDNumber + BinToHex(out)
                                 Cells(A, ResponseColA).value = "ERROR#2048 : Requested service $2E, Negative reply 31 : Request Out Of Range"
                                 A = A + 1
@@ -1005,7 +1009,7 @@ Public Function OutOfRangeLoop(DIDdefValueBin As String, UpDownList As String)
                                 Cells(A, SIDColA).value = "$2E"
                                 Cells(A, IDColA).value = "$" + DIDNumber
                                 Cells(A, SessionColA).value = "100" + CStr(session)
-                                Cells(A, ServiceColA).value = "WRITE value OUTOFRANGE " + Str(dec - res) + " in " + ParamName
+                                Cells(A, ServiceColA).value = "WRITE value OUTOFRANGE " + Str(dec - res) + " in " + ParamName + " -> " + inBin
                                 Cells(A, RequestColA).value = "2E" + DIDNumber + BinToHex(out)
                                 Cells(A, ResponseColA).value = "ERROR#2048 : Requested service $2E, Negative reply 31 : Request Out Of Range"
                                 A = A + 1
