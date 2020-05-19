@@ -57,6 +57,7 @@ Public Function CreateExtFile(fileName As String, Optional ByVal Path As String 
 End Function
 
 Public Function BinToDec(bin As String, Optional ByVal sign As Boolean = False, Optional ByVal ConvMode As Integer = 0, Optional ByVal res As Double = 1, Optional ByVal off As Double = 0) As Double
+    ' bin2Dec (val + off) * res
     Dim i As Integer
     Dim temp As String
     temp = ""
@@ -145,6 +146,7 @@ End Function
 
 Public Function DecToBin(dec As String, NumBit As Integer, Optional ByVal sign As Boolean = False, Optional ByVal ConvMode As Integer = 0, Optional ByVal res As String = "1", Optional ByVal off As String = "0") As String
 ' converts a decimal number in a binary value in n bit
+    ' dec2bin -> (val - off)/res
     Dim i As Integer
     Dim temp As String
     temp = ""
