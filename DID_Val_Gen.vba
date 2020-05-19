@@ -79,6 +79,7 @@ Public IgnoreDef As Boolean
 Public DIDNumber As String
 Public DIDName As String
 Public DIDdefValueBin As String
+Public DIDLength As Integer
 
 Public ButtonSession1 As Shape
 Public ButtonSession2 As Shape
@@ -292,6 +293,7 @@ Debug.Print ("")
                         Debug.Print ("-------- DID: " + DIDNumber + " - " + DIDName + "---------")
                     End If
 
+                    DIDLength = LengthRangeD.Cells(D, 1).value
 
                     'Detect IgnoreDef for DID D
                     If (IgnoreDefRangeD.Cells(D, 1).value <> 0) Then
@@ -309,7 +311,6 @@ Debug.Print ("")
                             Call DIDValStep("READ", "DEF")
                         End If
                     End If
-                    DIDdefValueBin = ComputeContent("DEF", "bin")
 
                     ' 2nd: Execute Write operation if active. If possible, try to write min, max, OutOfRange value,checking everytime
                     If ButtonRWSession3.TextFrame.Characters.text = "ON" Then
@@ -375,11 +376,6 @@ Debug.Print ("")
         Set objFolderItem = objFolder.Items.Item
         filePath = objFolderItem.Path
         fileName = "PVal_DID.xml"
-        'la su peux faire un test pour savoir si l'utilisateur a mis un .xls ou non
-        MsgBox filePath & "\" & fileName
-
-        ' can put a switch "output txt file DST?" and use an IF here
-        'use the info in new tab PVal to create the script DST
 
         Dim TempByteSent As String
 
@@ -449,6 +445,7 @@ Debug.Print ("")
 
     End If
 
+    If ButtonXML.TextFrame.Characters.text = "ON" Then MsgBox filePath & "\" & fileName
 
     Debug.Print ("==================================================")
     Debug.Print ("Application.SendKeys " + Chr(34) + "^g ^a {DEL}")
@@ -529,8 +526,12 @@ Function ComputeContent(what As String, Optional ByVal returnAs As String = "Hex
             ' but now decided new format: the whole list of values representable is listed, with x : Not Used for all the in valid values. min max nosense
             ' there is also a little macro to generate the list "x : Not Used" according to the size of the param. no excuses
             value = DefaultRangeD.Cells(Dt, 1).value
-            If InStr(value, ":") <> 0 Then
-                value = Left(value, InStr(value, ":") - 1)
+            If InStr(value, " ") <> 0 Then 'TODO replace : with " " to allow both : and = ?
+                value = Left(value, InStr(value, " ") - 1)
+            ElseIf value = "" Then
+                value = "0"
+            Else
+                value = DefaultRangeD.Cells(Dt, 1).value
             End If
             'Select Case what
             '    Case "MIN"
@@ -568,12 +569,10 @@ Function ComputeContent(what As String, Optional ByVal returnAs As String = "Hex
             '        'dec = Left(list(UBound(list)), InStr(list(UBound(list)), " ") - 1) + res
             '        'TODO find not used values
             'End Select
-
             dec = CDbl(value)
             bin = bin + DecToBin(value, size)
 
         ElseIf AsciRangeD.Cells(Dt, 1) <> 0 Then
-
             For i = 0 To size
                 bin = bin + "0"
             Next i
@@ -584,20 +583,14 @@ Function ComputeContent(what As String, Optional ByVal returnAs As String = "Hex
 
     Loop
 
-''===== Check if at least one data can go out of range. NOTE check if supplier implements as if you can still write the others data in DID, if not out of range. see if it is ok
-'        Debug.Print ("max = " + Str(Max))
-'        Debug.Print ("range = " + Str((((2 ^ size) - 1) / res - off)))
-'        If Max <> (((2 ^ size) - 1) / res - off) Then
-'            OutOfRange = True
-'        End If
-
 '    Final padding
-    If Bit Mod 8 <> 0 Then
-        For i = (Bit Mod 8) To 7
-            bin = bin + "0"
-            Bit = Bit + 1
-        Next i
-    End If
+    Do While Bit < (DIDLength * 8)
+
+        bin = bin + "0"
+        Bit = Bit + 1
+    Loop
+
+    If what = "DEF" Then DIDdefValueBin = bin
 
     If returnAs = "bin" Then
         ComputeContent = bin
@@ -753,7 +746,7 @@ Function DIDValStep(operation As String, what As String, Optional ByVal response
     Cells(A, SessionColA).value = "100" + CStr(session)
 
     'compose the content of the DID, either for the request or for the response
-    value = ComputeContent(what)
+    If response <> "IGNORE" Then value = ComputeContent(what)
 
     Select Case operation
         Case "WRITE"
@@ -892,7 +885,7 @@ Public Function MinMaxValueLoop(DIDdefValueBin As String, MinMax As String)
             Cells(A, 1).value = A - 1
             Cells(A, SIDColA).value = "$22"
             Cells(A, IDColA).value = "$" + DIDNumber
-            Cells(A, ServiceColA).value = "CHECK value " + MinMax + " in " + ParamName
+            Cells(A, ServiceColA).value = "CHECK value " + MinMax + " in " + ParamName + " -> " + inBin
             Cells(A, SessionColA).value = "100" + CStr(session)
             Cells(A, RequestColA).value = "22" + DIDNumber
             Cells(A, ResponseColA).value = "62" + DIDNumber + BinToHex(out)
@@ -1020,7 +1013,6 @@ Public Function OutOfRangeLoop(DIDdefValueBin As String, UpDownList As String)
                                 A = A + 1
                             End If
                         End If
-
                     End If
                 End If
             End Select
