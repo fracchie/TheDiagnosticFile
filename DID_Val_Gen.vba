@@ -342,6 +342,7 @@ Debug.Print ("")
                             'Call DIDValStep("WRITE", "OUTOFRANGEUP", "OUTOFRANGE")
                             'Call DIDValStep("CHECK", "OUTOFRANGEUP", "IGNORE")
 
+                            Call ListValueLoop(DIDdefValueBin)
                             Call OutOfRangeLoop(DIDdefValueBin, "LIST")
 
                             Call DIDValStep("WRITE", "DEF")
@@ -1019,6 +1020,52 @@ Public Function OutOfRangeLoop(DIDdefValueBin As String, UpDownList As String)
                     End If
                 End If
             End Select
+        Dt = Dt + 1
+    Loop
+End Function
+
+Public Function ListValueLoop(DIDdefValueBin As String)
+    Dim Dt As Integer
+    Dt = D
+
+    Do While Right(DIDRangeD.Cells(Dt, 1).value, 4) = DIDNumber
+        If ListRangeD.Cells(Dt, 1).value <> 0 Then
+            Dim ParamName As String
+            Dim dec As Double
+            Dim size As Integer
+            Dim inBin As String
+            Dim out As String
+            Dim bitOff As Integer
+            Dim ByteStart As Integer
+            Dim temp() As String
+            Dim i As Integer
+            ParamName = NameRangeD.Cells(Dt, 1).value
+            size = SizeRangeD.Cells(Dt, 1).value
+            temp = Split(CodingRangeD.Cells(Dt, 1).value, vbLf)
+            For i = 0 To UBound(temp)
+                If InStr(temp(i), "Not Used") = 0 Then
+                    dec = CDbl(Left(temp(i), InStr(temp(i), ":") - 1))
+                    inBin = DecToBin(Str(dec), size)
+                    out = replaceInString(DIDdefValueBin, inBin, (ByteStart - 1) * 8 + bitOff)
+                    Cells(A, 1).value = A - 1
+                    Cells(A, SIDColA).value = "$2E"
+                    Cells(A, IDColA).value = "$" + DIDNumber
+                    Cells(A, SessionColA).value = "100" + CStr(session)
+                    Cells(A, ServiceColA).value = "WRITE value " + Str(dec) + " in " + ParamName + " -> " + inBin
+                    Cells(A, RequestColA).value = "2E" + DIDNumber + BinToHex(out)
+                    Cells(A, ResponseColA).value = "6E" + DIDNumber
+                    A = A + 1
+                    Cells(A, 1).value = A - 1
+                    Cells(A, SIDColA).value = "$22"
+                    Cells(A, IDColA).value = "$" + DIDNumber
+                    Cells(A, SessionColA).value = "100" + CStr(session)
+                    Cells(A, ServiceColA).value = "Read value " + Str(dec) + " in " + ParamName
+                    Cells(A, RequestColA).value = "22" + DIDNumber
+                    Cells(A, ResponseColA).value = "62" + DIDNumber + BinToHex(out)
+                    A = A + 1
+                End If
+            Next i
+        End If
         Dt = Dt + 1
     Loop
 End Function
