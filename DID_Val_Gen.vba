@@ -909,6 +909,7 @@ Public Function OutOfRangeLoop(DIDdefValueBin As String, UpDownList As String)
     Dim ByteStart As Integer
 
     Do While Right(DIDRangeD.Cells(Dt, 1).value, 4) = DIDNumber
+        inBin = ""
         ParamName = NameRangeD.Cells(Dt, 1).value
         'If InStr(paramName, ".") <> 0 Then
         '    paramName = Right(paramName, Len(paramName) - InStr(paramName, "."))
