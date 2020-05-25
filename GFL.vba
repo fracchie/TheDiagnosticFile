@@ -57,7 +57,6 @@ Public Function CreateExtFile(fileName As String, Optional ByVal Path As String 
 End Function
 
 Public Function BinToDec(bin As String, Optional ByVal sign As Boolean = False, Optional ByVal ConvMode As Integer = 0, Optional ByVal res As Double = 1, Optional ByVal off As Double = 0) As Double
-    ' bin2Dec (val + off) * res
     Dim i As Integer
     Dim temp As String
     temp = ""
@@ -146,12 +145,13 @@ End Function
 
 Public Function DecToBin(dec As String, NumBit As Integer, Optional ByVal sign As Boolean = False, Optional ByVal ConvMode As Integer = 0, Optional ByVal res As String = "1", Optional ByVal off As String = "0") As String
 ' converts a decimal number in a binary value in n bit
-    ' dec2bin -> (val - off)/res
     Dim i As Integer
     Dim temp As String
+
     temp = ""
     dec = CDbl(dec) 'changed argument into string, because need to reduce math that would lead to approximation -> here a 6 may get 5.99999 fucking up the whole algorithm
     dec = (dec - off) / res
+
     If sign = False Then
         For i = NumBit - 1 To 0 Step -1 'countdown
             If Int(dec / (2 ^ i)) > 0 Then
@@ -162,6 +162,7 @@ Public Function DecToBin(dec As String, NumBit As Integer, Optional ByVal sign A
             End If
         Next i
     Else 'signed value
+
         Select Case ConvMode
             Case 0
                 If dec < 0 Then
@@ -180,7 +181,7 @@ Public Function DecToBin(dec As String, NumBit As Integer, Optional ByVal sign A
             Case 1
                 'TODO
             Case 2
-                'TODO
+
         End Select
     End If
     DecToBin = temp
@@ -496,4 +497,81 @@ Public Function checkParam(readDIDbin As String, maskedDIDbin As String, Optiona
         End If
     Next i
     checkParam = check
+End Function
+
+Public Function NewDecToBin(dec As String, NumBit As Integer, Optional ByVal sign As Boolean = False, Optional ByVal ConvMode As Integer = 0, Optional ByVal res As String = "1", Optional ByVal off As String = "0") As String
+' converts a decimal number in a binary value in n bit
+    Dim i As Integer
+    Dim temp As String
+    Dim absBin As String
+
+    temp = ""
+    dec = CDbl(dec) 'changed argument into string, because need to reduce math that would lead to approximation -> here a 6 may get 5.99999 fucking up the whole algorithm
+    dec = (dec - CDbl(off)) / CDbl(res)
+    decAbs = Abs(dec)
+
+    absBin = ""
+    'TODO check if conversion is possible, otherwise return error
+    'consider that if it is signed, it will always need one bit more
+    For i = NumBit - 1 To 0 Step -1 'countdown
+        If Int(decAbs / (2 ^ i)) > 0 Then
+            absBin = absBin + "1"
+            decAbs = decAbs - (2 ^ i)
+        Else
+            absBin = absBin + "0"
+        End If
+    Next i
+    If sign = False Then
+        NewDecToBin = absBin 'return result
+    Else 'signed value
+        temp = absBin
+        Select Case ConvMode
+            Case 0
+                If dec < 0 Then
+                    NewDecToBin = replaceInString(absBin, "1", 0) 'If abs is already taking all the bit it is not possible. but condition at beginiing of fucntion should already cover it
+                Else
+                    NewDecToBin = temp
+                End If
+            Case 1
+                If dec < 0 Then
+                    NewDecToBin = Complement(temp)
+                Else
+                    NewDecToBin = temp
+                End If
+            Case 2
+                If dec > 0 Then
+                    NewDecToBin = temp
+                Else
+                    temp = Complement(temp) 'inv
+                    'add 1
+                    If Right(temp, 1) = "0" Then
+                        temp = replaceInString(temp, "1", Len(temp) - 1)
+                        NewDecToBin = temp
+                    Else
+                        i = 1
+                        Do While Left(Right(temp, i), 1) = "1"
+                            temp = replaceInString(temp, "0", Len(temp) - i)
+                            i = i + 1
+                        Loop
+                        If i < Len(temp) Then temp = replaceInString(temp, "1", Len(temp) - i)
+                    End If
+                    NewDecToBin = temp
+                End If
+        End Select
+    End If
+End Function
+
+Public Function Complement(original As String) As String
+    Dim output As String
+    Dim i As Integer
+
+    For i = 1 To Len(original)
+        If Right(Left(original, i), 1) = "0" Then
+            original = replaceInString(original, "1", i - 1)
+        Else
+            original = replaceInString(original, "0", i - 1)
+        End If
+    Next i
+    Complement = original
+
 End Function
