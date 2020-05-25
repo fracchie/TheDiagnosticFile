@@ -58,6 +58,9 @@ Public Const FORBIDDEN = "FORBIDDEN"
 Public Const OUTOFRANGE = "OUTOFRANGE"
 Public Const MAX = "MAX"
 Public Const MIN = "MIN"
+Public Const NegRepr = 2
+
+Public signed As Boolean
 
 'Public DT As Integer
 Public ServiceColA As Integer
@@ -87,6 +90,7 @@ Public ButtonSession3 As Shape
 Public ButtonRWSession1 As Shape
 Public ButtonRWSession2 As Shape
 Public ButtonRWSession3 As Shape
+Public DefValueButton As Shape
 Public ButtonXML As Shape
 Public ButtonReset As Shape
 
@@ -137,6 +141,7 @@ Sub PValXML()
     Set ButtonRWSession1 = Worksheets("Parameters").Shapes("ButtonRWSession1")
     Set ButtonRWSession2 = Worksheets("Parameters").Shapes("ButtonRWSession2")
     Set ButtonRWSession3 = Worksheets("Parameters").Shapes("ButtonRWSession3")
+    Set DefValueButton = Worksheets("Parameters").Shapes("DefValueButton")
     Set ButtonXML = Worksheets("Parameters").Shapes("ButtonXML")
 
     '----------------------------------------------------------------------------------------------------
@@ -275,7 +280,7 @@ Debug.Print ("")
                         If (IgnoreDef = True) Then
                             Call DIDValStep("READ", "DEF", "IGNORE") 'TODO const READ etc
                         Else
-                            Call DIDValStep("READ", "DEF")
+                            Call DIDValStep("CHECK", "DEF")
                         End If
 
                         '== 1st if RW, also a WRITE in session1 - expected to be forbidden
@@ -330,13 +335,14 @@ Debug.Print ("")
                         IgnoreDef = False
                     End If
 
-
-                    'Read Def value
-                    If (ReadRangeD.Cells(D, 1).value <> 0) Then
-                        If (IgnoreDef = True) Then
-                            Call DIDValStep("CHECK", "DEF", "IGNORE") 'TODO const READ etc
-                        Else
-                            Call DIDValStep("CHECK", "DEF")
+                    If DefValueButton.TextFrame.Characters.text = "ON" Then
+                        'Read Def value
+                        If (ReadRangeD.Cells(D, 1).value <> 0) Then
+                            If (IgnoreDef = True) Then
+                                Call DIDValStep("READ", "DEF", "IGNORE") 'TODO const READ etc
+                            Else
+                                Call DIDValStep("CHECK", "DEF")
+                            End If
                         End If
                     End If
 
@@ -472,17 +478,15 @@ Function ComputeContent(what As String, Optional ByVal returnAs As String = "Hex
             res = ResRangeD.Cells(Dt, 1).value
             off = OffsetRangeD.Cells(Dt, 1).value
             size = CInt(SizeRangeD.Cells(Dt, 1).value)
-            ' Signed values, msb sign carry - TODO check if they use 2-complement instead 'TODO manage negative, decide if 2compl or msb
-            If SignRangeD.Cells(Dt, 1).value = "s" Then
-                size = size - 1
-                If (CDbl(dec) < 0) Then
-                    bin = bin + "1"
-                    dec = Str(Abs(CDbl(dec)))
-                Else
-                    bin = bin + "0"
-                End If
-            End If
-
+            'If SignRangeD.Cells(Dt, 1).value = "s" Then
+            '    size = size - 1
+            '    If (CDbl(dec) < 0) Then
+            '        bin = bin + "1"
+            '        dec = Str(Abs(CDbl(dec)))
+            '    Else
+            '        bin = bin + "0"
+            '    End If
+            'End If
             Select Case what
                 Case "MIN"
                     dec = MinRangeD.Cells(Dt, 1).value
@@ -497,7 +501,8 @@ Function ComputeContent(what As String, Optional ByVal returnAs As String = "Hex
                 'Case "OUTOFRANGE"
                     'dec = CDbl(MaxRangeD.Cells(Dt, 1).value) + res
             End Select
-            bin = bin + DecToBin(Str(dec), size, , , res, off)
+            bin = bin + NewDecToBin(Str(dec), size, SignRangeD.Cells(Dt, 1) = "s", NegRepr, res, off)
+            'bin = bin + DecToBin(Str(dec), size, , , res, off)
             '====================================================
 
         ' List ===========================================
@@ -517,50 +522,17 @@ Function ComputeContent(what As String, Optional ByVal returnAs As String = "Hex
             Else
                 value = DefaultRangeD.Cells(Dt, 1).value
             End If
-            'Select Case what
-            '    Case "MIN"
-            '        dec = Left(list(0), InStr(list(0), " "))
-            '    Case "MAX"
-            '        'It is always writing the last number written in the list of values.
-            '        dec = Left(list(UBound(list)), InStr(list(UBound(list)), " ") - 1)
-            '        'TODO check Not used values, the function is half working, but shoudld be properly thought how to design this check
-            '        'If IsInArray("Not Used", list) <> -1 Then
-            '        '    OUTOFRANGE = True
-            '        '    Debug.Print ("Can go out of range")
-            '        '    Debug.Print ("found")
-            '        'End If
-            '        If dec <> (((2 ^ size) - 1)) Then
-            '            'Debug.Print ("Can go out of range")
-            '        End If
-            '    Case "DEF"
-            '        'get dec value, checking white space
-            '        If InStr(DefaultRangeD.Cells(Dt, 1).value, " ") = 0 Then
-            '            dec = CDbl(DefaultRangeD.Cells(Dt, 1))
-            '        Else
-            '            dec = CDbl(Left(DefaultRangeD.Cells(Dt, 1).value, (InStr(DefaultRangeD.Cells(Dt, 1).value, " ")) - 1))
-            '        End If
-            '
-            '   Case "OUTOFRANGE"
-            '       dec = Left(list(UBound(list)), InStr(list(UBound(list)), " ") - 1) + 1
-            '        'i = IsInArray("Not Used", list)
-            '        'If i <> -1 Then
-            '        '    Debug.Print ("out of range element " + i)
-            '        '    'dec = Left(list(IsInArray("Not Used", list), InStr(IsInArray("Not Used", list), " "))
-            '        'End If
-            '
-            '        'for each element in string array, search if there is "No Used".
-            '        'try to write it in the DID -> just one, or all?
-            '        'dec = Left(list(UBound(list)), InStr(list(UBound(list)), " ") - 1) + res
-            '        'TODO find not used values
-            'End Select
+
             dec = CDbl(value)
-            bin = bin + DecToBin(value, size)
+            bin = bin + NewDecToBin(value, size)
 
         ElseIf AsciRangeD.Cells(Dt, 1) <> 0 Then
             For i = 0 To size
                 bin = bin + "0"
             Next i
         End If
+
+        Debug.Print ("      -> dec: " + Str(dec) + " -> bin: " + bin)
 
         Bit = Bit + SizeRangeD.Cells(Dt, 1) 'TODO watchout if using negative number represtation msb, check if did size-1
         Dt = Dt + 1
@@ -584,129 +556,6 @@ Function ComputeContent(what As String, Optional ByVal returnAs As String = "Hex
 
 End Function
 
-Function DefaultValue() As String
-'--------------------------------------------
-'   For each DID (<- public D)
-
-    Dim bin As String
-    Dim dec As Double
-    Dim res As Double
-    Dim off As Double
-    Dim size As Integer
-    Dim Dt As Double
-    Dim space As Integer
-
-    Debug.Print ("...... " + NameRangeD.Cells(D, 1) + " ......")
-
-    space = InStr(DefaultRangeD.Cells(D, 1).value, " ")
-    If space = 0 Then
-        dec = DefaultRangeD.Cells(D, 1)
-    Else
-        dec = Left(DefaultRangeD.Cells(D, 1).value, space - 1)
-    End If
-
-    '--------------------------------------
-    ' initial padding, all 0s till beginning of data in DID
-    '-------------------------------------
-    bin = ""
-    Bit = 0
-    Do While Bit < ((StartRangeD.Cells(D, 1).value - 1) * 8) + BitOffsetRangeD.Cells(D, 1)
-        Bit = Bit + 1
-        bin = bin + "0"
-    Loop
-
-    'Write value
-
-    'TODO manage value with "," insert a quick if "," -> text "no auto val"
-    'can think to standardize "tbc" value in ref 17
-
-'-----------------------------
-' Get
-
-    size = SizeRangeD.Cells(D, 1)
-
-    If NumericRangeD.Cells(D, 1) <> 0 Then
-
-            res = CDbl(ResRangeD.Cells(D, 1).value)
-            Debug.Print (res)
-        off = OffsetRangeD.Cells(D, 1).value
-        If SignRangeD.Cells(D, 1).value <> 0 Then
-            size = size - 1
-            If dec < 0 Then 'signed notation: -1 first bit
-                bin = bin + "1"
-                dec = -1 * dec 'abs
-            Else
-                bin = bin + "0"
-            End If
-        End If
-
-    ElseIf ListRangeD.Cells(D, 1) <> 0 Then
-        res = 1
-        off = 0
-    End If
-
-    bin = bin + DecToBin(dec, size, res, off)
-
-    Bit = Bit + SizeRangeD.Cells(D, 1)
-
-    Dt = D + 1
-    Do While DIDRangeD.Cells(Dt, 1) = DIDRangeD.Cells(Dt - 1, 1)
-
-        Debug.Print ("...... " + NameRangeD.Cells(Dt, 1) + " ......")
-        Do While Bit < ((StartRangeD.Cells(Dt, 1).value - 1) * 8) + BitOffsetRangeD.Cells(Dt, 1)
-            Bit = Bit + 1
-            bin = bin + "0"
-        Loop
-
-        'get dec value
-        space = InStr(DefaultRangeD.Cells(Dt, 1).value, " ")
-        If space = 0 Then
-            dec = DefaultRangeD.Cells(Dt, 1)
-        Else
-            dec = Left(DefaultRangeD.Cells(Dt, 1).value, space - 1)
-        End If
-
-        size = SizeRangeD.Cells(Dt, 1)
-
-        If NumericRangeD.Cells(Dt, 1) <> 0 Then
-
-            res = CDbl(ResRangeD.Cells(Dt, 1).value)
-            Debug.Print (res)
-
-            off = OffsetRangeD.Cells(Dt, 1).value
-            If SignRangeD.Cells(Dt, 1).value <> 0 Then
-                size = size - 1
-                If dec < 0 Then 'signed notation: -1 first bit TODO check if it is 2-complement implementation
-                    bin = bin + "1"
-                    dec = -1 * dec 'abs
-                Else
-                    bin = bin + "0"
-                End If
-            End If
-
-        ElseIf ListRangeD.Cells(Dt, 1) <> 0 Then
-            res = 1
-            off = 0
-        End If
-
-        bin = bin + DecToBin(dec, size, res, off)
-
-        Bit = Bit + SizeRangeD.Cells(Dt, 1)
-        Dt = Dt + 1
-    Loop
-
-'    Final padding
-    If Bit Mod 8 <> 0 Then
-        For i = (Bit Mod 8) To 7
-            bin = bin + "0"
-            Bit = Bit + 1
-        Next i
-    End If
-
-'    Debug.Print (bin)
-    DefaultValue = bin
-
-End Function
 Function DIDValStepOutOfRange(parameter As String, UpDownNotUsed As String, request As String)
     'TODO specifi function for the out of range val step. when calling, a specific parameter is written out or range
     'up down to say if testing the lower or upper threshold, and notUsed for the lists
@@ -840,7 +689,6 @@ Public Function MinMaxValueLoop(DIDdefValueBin As String, MinMax As String)
             res = ResRangeD.Cells(Dt, 1).value
             'res = CDbl(ResRangeD.Cells(Dt, 1).value)
             off = OffsetRangeD.Cells(Dt, 1).value
-            ' Signed values, msb sign carry - TODO check if they use 2-complement instead 'TODO manage negative, decide if 2compl or msb
             If (MinMax = "MAX") Then
                 dec = MaxRangeD.Cells(Dt, 1).value
             Else 'UpDownList = "MIN"
@@ -848,17 +696,8 @@ Public Function MinMaxValueLoop(DIDdefValueBin As String, MinMax As String)
             End If
             Cells(A, ServiceColA).value = "WRITE value " + MinMax + " " + Str(dec) + " in " + ParamName
 
-            If SignRangeD.Cells(Dt, 1).value = "s" Then
-                size = size - 1
-                If (CDbl(dec) < 0) Then
-                    inBin = "1"
-                    dec = Str(Abs(CDbl(dec)))
-                Else
-                    inBin = "0"
-                End If
-            End If
 
-            inBin = inBin + DecToBin(Str(dec), size, , , res, off)
+            inBin = inBin + NewDecToBin(Str(dec), size, SignRangeD.Cells(Dt, 1).value = "s", NegRepr, res, off)
             out = replaceInString(DIDdefValueBin, inBin, (ByteStart - 1) * 8 + bitOff)
             Cells(A, 1).value = A - 1
             Cells(A, SIDColA).value = "$2E"
@@ -877,15 +716,6 @@ Public Function MinMaxValueLoop(DIDdefValueBin As String, MinMax As String)
             Cells(A, RequestColA).value = "22" + DIDNumber
             Cells(A, ResponseColA).value = "62" + DIDNumber + BinToHex(out)
             A = A + 1
-            'Removed because should not be needed. next step will be anyway writing all at default value, just changing the specific param
-            'Cells(A, 1).value = A - 1
-            'Cells(A, SIDColA).value = "$2E"
-            'Cells(A, IDColA).value = "$" + DIDNumber
-            'Cells(A, ServiceColA).value = "WRITE back value DEF in " + DIDName
-            'Cells(A, SessionColA).value = "100" + CStr(session)
-            'Cells(A, RequestColA).value = "2E" + DIDNumber + BinToHex(DIDdefValueBin)
-            'Cells(A, ResponseColA).value = "6E" + DIDNumber
-            'A = A + 1
         End If
         Dt = Dt + 1
     Loop
@@ -899,6 +729,8 @@ Public Function OutOfRangeLoop(DIDdefValueBin As String, UpDownList As String)
     Dim off As Double
     Dim dec As Double
     Dim size As Integer
+    Dim lowLimitDec As Double
+    Dim HighLimitDec As Double
     Dt = D
     Dim inBin As String
     Dim out As String
@@ -923,7 +755,7 @@ Public Function OutOfRangeLoop(DIDdefValueBin As String, UpDownList As String)
                         If InStr(temp(i), "Not Used") <> 0 Then
                             val = CDbl(Left(temp(i), InStr(temp(i), ":") - 1))
 
-                            inBin = DecToBin(Str(val), size)
+                            inBin = NewDecToBin(Str(val), size)
                             'Debug.Print (inBin)
                             out = replaceInString(DIDdefValueBin, inBin, (ByteStart - 1) * 8 + bitOff)
                             'Debug.Print (out)
@@ -948,60 +780,61 @@ Public Function OutOfRangeLoop(DIDdefValueBin As String, UpDownList As String)
                     ' Signed values, msb sign carry - TODO check if they use 2-complement instead 'TODO manage negative, decide if 2compl or msb
                     If (UpDownList = "UP") Then
                         dec = CDbl(MaxRangeD.Cells(Dt, 1).value)
+                        If SignRangeD.Cells(Dt, 1).value = "s" Then
+                            HighLimitDec = CDbl((2 ^ (size - 1) - 1 + off) * res)
+                        Else
+                            HighLimitDec = CDbl((2 ^ size - 1 + off) * res)
+                        End If
                     Else 'UpDownList = "Down"
                         dec = CDbl(MinRangeD.Cells(Dt, 1).value)
-
-                    End If
-                    If SignRangeD.Cells(Dt, 1).value = "s" Then
-                        size = size - 1
-                        If (dec < 0) Then
-                            inBin = "1"
-                            dec = -1 * dec 'abs
+                        If SignRangeD.Cells(Dt, 1).value = "s" Then
+                            If NegRepr = 2 Then
+                                lowLimitDec = CDbl((2 ^ (size - 1) + off) * res) * -1
+                            Else
+                                lowLimitDec = CDbl((2 ^ (size - 1) - 1 + off) * res) * -1
+                            End If
                         Else
-                            inBin = "0"
+                            lowLimitDec = off
                         End If
                     End If
+
+
+                    'If SignRangeD.Cells(Dt, 1).value = "s" Then
+                    '    size = size - 1
+                    '    If (dec < 0) Then
+                    '        inBin = "1"
+                    '        dec = -1 * dec 'abs
+                    '    Else
+                    '        inBin = "0"
+                    '    End If
+                    'End If
                     If UpDownList = "UP" Then
-                        If dec <> (((2 ^ size) - 1 + off) * res) Then 'Can go out of range
-                            inBin = inBin + DecToBin(dec + res, size, , , res, off)
+                        If dec < HighLimitDec Then 'Can go out of range
+                            dec = dec + res
+                            inBin = inBin + NewDecToBin(Str(dec), size, SignRangeD.Cells(Dt, 1).value = "s", NegRepr, res, off)
                             out = replaceInString(DIDdefValueBin, inBin, (ByteStart - 1) * 8 + bitOff)
                             Cells(A, 1).value = A - 1
                             Cells(A, SIDColA).value = "$2E"
                             Cells(A, IDColA).value = "$" + DIDNumber
                             Cells(A, SessionColA).value = "100" + CStr(session)
-                            Cells(A, ServiceColA).value = "WRITE value OUTOFRANGE " + Str(dec + res) + " in " + ParamName + " -> " + inBin
+                            Cells(A, ServiceColA).value = "WRITE value OUTOFRANGE " + Str(dec) + " in " + ParamName + " -> " + inBin
                             Cells(A, RequestColA).value = "2E" + DIDNumber + BinToHex(out)
                             Cells(A, ResponseColA).value = "ERROR#2048 : Requested service $2E, Negative reply 31 : Request Out Of Range"
                             A = A + 1
                         End If
                     Else 'DOWN
-                        If SignRangeD.Cells(Dt, 1) = "s" Then
-                            'for upper threshold not needed to differentiate sign and unsigned. here i don't see how to differentiate the lower threshold
-                            If dec < (((2 ^ size - 1) + off) * res) Then  'dec is already in abs value, and size has been reduced by one because of the sign
-                                inBin = inBin + DecToBin(dec + res, size, res, off)
-                                out = replaceInString(DIDdefValueBin, inBin, (ByteStart - 1) * 8 + bitOff)
-                                Cells(A, 1).value = A - 1
-                                Cells(A, SIDColA).value = "$2E"
-                                Cells(A, IDColA).value = "$" + DIDNumber
-                                Cells(A, SessionColA).value = "100" + CStr(session)
-                                Cells(A, ServiceColA).value = "WRITE value OUTOFRANGE -" + Str(dec + res) + " in " + ParamName + " -> " + inBin
-                                Cells(A, RequestColA).value = "2E" + DIDNumber + BinToHex(out)
-                                Cells(A, ResponseColA).value = "ERROR#2048 : Requested service $2E, Negative reply 31 : Request Out Of Range"
-                                A = A + 1
-                            End If
-                        Else 'Unsigned
-                            If dec <> off Then
-                                inBin = inBin + DecToBin(dec - res, size, res, off)
-                                out = replaceInString(DIDdefValueBin, inBin, (ByteStart - 1) * 8 + bitOff)
-                                Cells(A, 1).value = A - 1
-                                Cells(A, SIDColA).value = "$2E"
-                                Cells(A, IDColA).value = "$" + DIDNumber
-                                Cells(A, SessionColA).value = "100" + CStr(session)
-                                Cells(A, ServiceColA).value = "WRITE value OUTOFRANGE " + Str(dec - res) + " in " + ParamName + " -> " + inBin
-                                Cells(A, RequestColA).value = "2E" + DIDNumber + BinToHex(out)
-                                Cells(A, ResponseColA).value = "ERROR#2048 : Requested service $2E, Negative reply 31 : Request Out Of Range"
-                                A = A + 1
-                            End If
+                        If dec > lowLimitDec Then
+                            dec = dec - res
+                            inBin = NewDecToBin(Str(dec), size, SignRangeD.Cells(Dt, 1).value = "s", NegRepr, res, off)
+                            out = replaceInString(DIDdefValueBin, inBin, (ByteStart - 1) * 8 + bitOff)
+                            Cells(A, 1).value = A - 1
+                            Cells(A, SIDColA).value = "$2E"
+                            Cells(A, IDColA).value = "$" + DIDNumber
+                            Cells(A, SessionColA).value = "100" + CStr(session)
+                            Cells(A, ServiceColA).value = "WRITE value OUTOFRANGE " + Str(dec) + " in " + ParamName + " -> " + inBin
+                            Cells(A, RequestColA).value = "2E" + DIDNumber + BinToHex(out)
+                            Cells(A, ResponseColA).value = "ERROR#2048 : Requested service $2E, Negative reply 31 : Request Out Of Range"
+                            A = A + 1
                         End If
                     End If
                 End If
@@ -1031,7 +864,7 @@ Public Function ListValueLoop(DIDdefValueBin As String)
             For i = 0 To UBound(temp)
                 If InStr(temp(i), "Not Used") = 0 Then
                     dec = CDbl(Left(temp(i), InStr(temp(i), ":") - 1))
-                    inBin = DecToBin(Str(dec), size)
+                    inBin = NewDecToBin(Str(dec), size, True, NegRepr)
                     out = replaceInString(DIDdefValueBin, inBin, (ByteStart - 1) * 8 + bitOff)
                     Cells(A, 1).value = A - 1
                     Cells(A, SIDColA).value = "$2E"
@@ -1045,7 +878,7 @@ Public Function ListValueLoop(DIDdefValueBin As String)
                     Cells(A, SIDColA).value = "$22"
                     Cells(A, IDColA).value = "$" + DIDNumber
                     Cells(A, SessionColA).value = "100" + CStr(session)
-                    Cells(A, ServiceColA).value = "Read value " + Str(dec) + " in " + ParamName
+                    Cells(A, ServiceColA).value = "CHECK value " + Str(dec) + " in " + ParamName
                     Cells(A, RequestColA).value = "22" + DIDNumber
                     Cells(A, ResponseColA).value = "62" + DIDNumber + BinToHex(out)
                     A = A + 1
