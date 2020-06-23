@@ -7,7 +7,7 @@ Option Explicit
 '      Global Variables Declaration
 '============================================================================================================================================================================================================================================================================================
 
-Public A As Integer
+Public a As Integer
 Public D As Integer
 Public HeadersRangeD As Range
 Public NameRangeD As Range
@@ -77,7 +77,7 @@ Sub DCgen()
     Set CodingRangeD = Range(HeadersRangeD.Find("Coding", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Coding", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
     Set ConfigRangeD = Range(HeadersRangeD.Find("Config", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Config", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
 
-    Dim A As Integer
+    Dim a As Integer
     Dim list() As String, value As String, Label As String, l As Integer
 
     For Each Sheet In ThisWorkbook.Worksheets
@@ -125,31 +125,31 @@ Sub DCgen()
     Rows(36).RowHeight = 25
 
 
-    A = 46 'starting Arrival sheet line should be 55 if considering the header of DC, TO ADD
+    a = 46 'starting Arrival sheet line should be 55 if considering the header of DC, TO ADD
 
     For D = 2 To NameRangeD.Cells.Count
         If ConfigRangeD.Cells(D, 1) <> 0 Then 'If this data is meant to be in config
             Debug.Print (NameRangeD.Cells(D, 1).value)
-            Cells(A, DataNameColA).value = NameRangeD.Cells(D, 1).value
-            Cells(A, SizeColA).value = SizeRangeD.Cells(D, 1).value
+            Cells(a, DataNameColA).value = NameRangeD.Cells(D, 1).value
+            Cells(a, SizeColA).value = SizeRangeD.Cells(D, 1).value
             'Cells(A, DescriptionColA).Value = DescriptionRangeD.Cells(D, 1).Value 'TODO removed because tradconf bugs with description if things like " are used
             If NumericRangeD.Cells(D, 1) <> 0 Then
-                Cells(A, ValueColA).value = Left(DefaultRangeD.Cells(D, 1), Len(DefaultRangeD.Cells(D, 1)) - InStr(DefaultRangeD.Cells(D, 1), " ") - 1)
+                Cells(a, ValueColA).value = Left(DefaultRangeD.Cells(D, 1), Len(DefaultRangeD.Cells(D, 1)) - InStr(DefaultRangeD.Cells(D, 1), " ") - 1)
             ElseIf ListRangeD.Cells(D, 1) <> 0 Then
 
                 list = Split(CodingRangeD.Cells(D, 1), vbLf)
                 l = 0
-                Cells(A, ValueColA).value = Left(list(l), InStr(list(l), "=") - 1)
-                Cells(A, CommentsColA).value = Right(list(l), Len(list(l)) - InStr(list(l), "="))
+                Cells(a, ValueColA).value = Left(list(l), InStr(list(l), ":") - 1)
+                Cells(a, CommentsColA).value = Right(list(l), Len(list(l)) - InStr(list(l), ":"))
                 For l = 1 To UBound(list)
-                    A = A + 1
-                    Cells(A, ValueColA).value = Left(list(l), InStr(list(l), "=") - 1)
-                    Cells(A, CommentsColA).value = Right(list(l), Len(list(l)) - InStr(list(l), "="))
+                    a = a + 1
+                    Cells(a, ValueColA).value = Left(list(l), InStr(list(l), ":") - 1)
+                    Cells(a, CommentsColA).value = Right(list(l), Len(list(l)) - InStr(list(l), ":"))
                 Next l
 
             End If
 
-            A = A + 1
+            a = a + 1
         End If
 
     Next D
