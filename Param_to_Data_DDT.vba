@@ -26,19 +26,6 @@ Sub ToData()
     Dim DecOff As Integer
 
     '============================== Arrival sheet :toDATA
-    For Each Sheet In ThisWorkbook.Worksheets
-        If Sheet.Name Like "ToData" Then
-            Application.DisplayAlerts = False
-            Worksheets("ToData").Delete
-            ActiveWorkbook.Sheets.Add After:=Worksheets(Worksheets.Count)
-            ActiveSheet.Name = "ToData"
-            Exit For
-        ElseIf Sheet Is Worksheets.Item(Worksheets.Count) = True Then
-            ActiveWorkbook.Sheets.Add After:=Worksheets(Worksheets.Count)
-            ActiveSheet.Name = "ToData"
-        End If
-    Next Sheet
-    Worksheets("ToData").Activate
 
     Dim NameColA As Integer: NameColA = 1
     Dim MnemoColA As Integer: MnemoColA = 2
@@ -57,6 +44,20 @@ Sub ToData()
     Dim Color
     Dim Sheet As Worksheet
     Dim Cell As Range
+
+    For Each Sheet In ThisWorkbook.Worksheets
+        If Sheet.Name Like "ToData" Then
+            Application.DisplayAlerts = False
+            Worksheets("ToData").Delete
+            ActiveWorkbook.Sheets.Add After:=Worksheets(Worksheets.Count)
+            ActiveSheet.Name = "ToData"
+            Exit For
+        ElseIf Sheet Is Worksheets.Item(Worksheets.Count) = True Then
+            ActiveWorkbook.Sheets.Add After:=Worksheets(Worksheets.Count)
+            ActiveSheet.Name = "ToData"
+        End If
+    Next Sheet
+    Worksheets("ToData").Activate
 
     '----------------------------------------------------------------------------------------
     'Headers -> can be replaced by new function  GFL.formatCell
@@ -122,11 +123,7 @@ Sub ToData()
 
 '----------------------------------------------------------------------------------------------------
 '"Arrival" sheet : BetaToDID
-'----------------------------------------------------------------------------------------------------
-
-
-
-
+'---------------------------------------------------------------------------------------------------
     A = 2
     D = 2
 
@@ -197,15 +194,8 @@ Sub ToData()
                 For l = 0 To UBound(list)
                     If InStr(list(l), "Not Used") <> 0 Then
                         A = A + 1
-    '                    Debug.Print (List(l))
-                        Cells(A, MnemoColA).value = Left(list(l), InStr(list(l), "=") - 1)
-                        Cells(A, SizeColA).value = Right(list(l), Len(list(l)) - InStr(list(l), "="))
-    '                    Label = Right(List(L), Len(List(L)) - InStr(List(L), "="))
-    '                    Cells(A, SizeColA).Value = Label
-    '                       Cells(A, MnemoColA).Value = Split(List(L), "=")
-    '                       Cells(R, 2).Value = Value
-    '                       Label = Right(List(L), Len(List(L)) - InStr(List(L), "="))
-    '                       Cells(R, 3).Value = Label
+                        Cells(A, MnemoColA).value = Left(list(l), InStr(list(l), ":") - 1)
+                        Cells(A, SizeColA).value = Right(list(l), Len(list(l)) - InStr(list(l), ":"))
                     End If
                 Next l
             ElseIf AsciiHexaRangeD.Cells(D, 1).value <> 0 Then
@@ -213,66 +203,12 @@ Sub ToData()
 
             End If
 
-
-    '        If DIDRangeD.Cells(D, 1) = 0 Then
-    '
-    '        'if new DID
-    '        ElseIf DIDRangeD.Cells(D, 1) <> DIDRangeD.Cells(D - 1, 1) Then 'if first voice of new DID
-    '
-    '
-    '            If Not (TypeName(DIDRangeD.Cells(D, 1).Value) Like "String") Then
-    '                    DID = Str(DIDRangeD.Cells(D, 1).Value)
-    '            Else
-    '                DID = DIDRangeD.Cells(D, 1).Value
-    '            End If
-    '
-    ''            DID = Replace(DID, "0113", " ")
-    ''            DID = Replace(DID, " ", "")
-    '            Debug.Print (DID)
-    '            Debug.Print (InStr(DID, "$"))
-    '            DID = Replace(DID, "$", "")
-    '
-    '
-    '            Cells(A, MnemoColA).Value = DIDRangeD.Cells(D, 1).Value
-    '            Cells(A, ParamColA).Value = 4
-    '            Cells(A, StartColA).Value = LengthRangeD.Cells(D, 1).Value
-    '            Cells(A, EndianColA).Value = 0
-    '
-    '           'if is a DID containing several data -> create first line DID in Arrival sheet
-    '            If InStr(NameRangeD.Cells(D, 1).Value, ".") <> 0 Then
-    '
-    '                Cells(A, NameColA).Value = Left(NameRangeD.Cells(D, 1).Value, InStr(NameRangeD.Cells(D, 1).Value, ".") - 1)
-    '            'otherwise it is a DID with just one data
-    '            Else
-    '                Cells(A, NameColA).Value = NameRangeD.Cells(D, 1).Value
-    '
-    '            End If
-    '
-    '            A = A + 1
-    '            Cells(A, MnemoColA).Value = "record"
-    '            Cells(A, ParamColA).Value = Right(NameRangeD.Cells(D, 1).Value, Len(NameRangeD.Cells(D, 1).Value) - InStr(NameRangeD.Cells(D, 1).Value, "."))
-    '            Cells(A, StartColA).Value = StartRangeD.Cells(D, 1).Value + 3
-    '            Cells(A, OffColA).Value = OffsetRangeD.Cells(D, 1).Value
-    '            Cells(A, EndianColA).Value = 0
-    '            Cells(A, RefColA).Value = 1
-    '
-    '
-    '        'or if nth record of same DID
-    '        Else
-    '            Cells(A, MnemoColA).Value = "record"
-    '            Cells(A, ParamColA).Value = Right(NameRangeD.Cells(D, 1).Value, Len(NameRangeD.Cells(D, 1).Value) - InStr(NameRangeD.Cells(D, 1).Value, "."))
-    '            Cells(A, StartColA).Value = StartRangeD.Cells(D, 1).Value + 3 'there is an offset of -3 in
-    '            Cells(A, OffColA).Value = OffsetRangeD.Cells(D, 1).Value
-    '            Cells(A, EndianColA).Value = 0
-    '            Cells(A, RefColA).Value = 1
-    '
-            End If
+        End If
 
         D = D + 1
         A = A + 1
     Next Cell
 
     Range("A2", Cells(A - 2, ListColA)).Select
-
 
 End Sub
