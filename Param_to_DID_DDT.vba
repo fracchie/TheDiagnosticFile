@@ -8,26 +8,7 @@ Sub ToDID()
 ' Numeric list must be written like 0 = item 1
 '                                   1 = item 2 ...
 ' One can copy paste its whole parameters list into the tab called (for the moment) "Parameters".
-'One can copy all the columns, no matter the number and differences, but the name of the used columns must be changed as specified here below:
-'Name
-'DID
-'Size (Bit)
-'Write
-'Read
-'Snapshot
-'Numeric
-'Signed unsigned
-'unit
-'res
-'Min
-'Max
-'Offset
-'Start Byte
-'Bit Offset
-'Length (Byte)
-'List
-'Coding
-
+'One can copy all the columns, no matter the number and differences, but the name of the used columns must be changed as specified in the parameters tab of the dfiagnostic file
 
 '----------------------------------------------------------------------------------------------------
 'Variables declaration
@@ -43,6 +24,7 @@ Sub ToDID()
     Dim StartRangeD As Range
     Dim BitOffsetRangeD As Range
     Dim DID As String
+
     '"Arrival" sheet :toDATA
     Dim NameColA As Integer, MnemoColA As Integer, ParamColA As Integer, SignColA As Integer, StartColA As Integer, OffColA As Integer, EndianColA As Integer, RefColA As Integer
     Dim HeadersRangeA As Range
@@ -52,34 +34,20 @@ Sub ToDID()
     Dim Sheet As Worksheet
     Dim Cell As Range
 
-
     Worksheets("Parameters").Activate
 '----------------------------------------------------------------------------------------------------
-''look for the specific headers defining a DDT data, stored in the ListHeaders.
-' find where headers are written, and define the headers row
-    'Range("HeaderRowD", Range("HeaderRowD").End(xlToRight).Address).Select
-    'Range("HeadersRangeD").EntireRow.
-
-    'Set HeadersRangeD = Range("HeadersRangeD", Range("HeadersRangeD").End(xlToRight).Address)
+    'the search of the header of the table is based on the top left cell which is named "Name"
     Set HeadersRangeD = Range("Name", Range("Name").End(xlToRight).Address)
-    HeadersRangeD.Select
-    'would like to format the whole thing as a tab, and maybe formatting the headers as text
-    'Find the needed columns in the header list. By default is NOT CASE SENSITIVE
-    'HeadersRangeD.Find("Name").Select
-    Set NameRangeD = Range(HeadersRangeD.Find("Name").Address, HeadersRangeD.Find("Name").End(xlDown))
-
-    Set DIDRangeD = Range(HeadersRangeD.Find("DID").Address, HeadersRangeD.Find("DID").End(xlDown))
-    Set LengthRangeD = Range(HeadersRangeD.Find("Length (Byte)").Address, HeadersRangeD.Find("Length (Byte)").End(xlDown))
-    Set StartRangeD = Range(HeadersRangeD.Find("Start Byte").Address, HeadersRangeD.Find("Start Byte").End(xlDown))
-    Set BitOffsetRangeD = Range(HeadersRangeD.Find("Bit Offset").Address, HeadersRangeD.Find("Bit Offset").End(xlDown))
-    Set ReadRangeD = Range(HeadersRangeD.Find("Read by DID").Address, HeadersRangeD.Find("Read by DID").End(xlDown))
-    Set WriteRangeD = Range(HeadersRangeD.Find("Write by DID").Address, HeadersRangeD.Find("Write by DID").End(xlDown))
-    Set SnapshotRangeD = Range(HeadersRangeD.Find("Snapshots").Address, HeadersRangeD.Find("Snapshots").End(xlDown))
-
+    Set NameRangeD = Range(HeadersRangeD.Find("Name", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Name", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
+    Set DIDRangeD = Range(HeadersRangeD.Find("DID", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("DID", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
+    Set LengthRangeD = Range(HeadersRangeD.Find("Length (Byte)", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Length (Byte)", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
+    Set StartRangeD = Range(HeadersRangeD.Find("Start Byte", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Start Byte", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
+    Set BitOffsetRangeD = Range(HeadersRangeD.Find("Bit Offset", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Bit Offset", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
+    Set ReadRangeD = Range(HeadersRangeD.Find("Read by DID", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Read by DID", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
+    Set WriteRangeD = Range(HeadersRangeD.Find("Write by DID", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Write by DID", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
+    Set SnapshotRangeD = Range(HeadersRangeD.Find("Snapshots", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Snapshots", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
 
     WriteRangeD.Select
-
-
 
 '----------------------------------------------------------------------------------------------------
 '"Arrival" sheet : BetaToDID
@@ -162,12 +130,7 @@ Sub ToDID()
                 DID = DIDRangeD.Cells(D, 1).value
             End If
 
-'            DID = Replace(DID, "0113", " ")
-'            DID = Replace(DID, " ", "")
-'            Debug.Print (DID)
-'            Debug.Print (InStr(DID, "$"))
             DID = Replace(DID, "$", "&H")
-'            Debug.Print (CDec(DID))
 
             Cells(A, MnemoColA).value = CDec(DID)
 
