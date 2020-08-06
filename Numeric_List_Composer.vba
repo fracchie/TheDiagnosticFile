@@ -4,17 +4,18 @@ Sub NumericListComponent()
 
     Dim size As Integer
     Dim i As Integer
-    Dim coding As String
+    Dim Coding As String
 
     size = Range("CodingSize").Offset(1, 0).value
 
-    coding = Empty
+    Coding = Empty
 
-    For i = 0 To ((2 ^ size) - 1)
-        coding = coding + CStr(i) + " : Not Used" + vbCrLf
+    For i = 0 To ((2 ^ size) - 2)
+        Coding = Coding + CStr(i) + " : Not Used" + vbCrLf
     Next i
+    Coding = Coding + CStr(i) + " : Not Used"
 
-    Range("CodingSize").Offset(1, 1).value = coding
-    Rows(Range("CodingSize").Offset(1, 0).row).RowHeight = 15
+    Range("CodingSize").Offset(1, 1).value = Coding
+    Rows(Range("CodingSize").Offset(1, 0).Row).RowHeight = 15
     Range("CodingSize").Offset(1, 1).Select
 End Sub
