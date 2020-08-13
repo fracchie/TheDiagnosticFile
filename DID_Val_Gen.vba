@@ -114,7 +114,7 @@ Sub PValXML()
     HeadersRangeD.Select
     'would like to format the whole thing as a tab, and maybe formatting the headers as text
     'Find the needed columns in the header list. By default is NOT CASE SENSITIVE
-    Set NameRangeD = Range(HeadersRangeD.Find("DID_Name", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("DID_Name", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
+    Set NameRangeD = Range(HeadersRangeD.Find("Name", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Name", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
     Set DIDRangeD = Range(HeadersRangeD.Find("DID", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("DID", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
     Set LengthRangeD = Range(HeadersRangeD.Find("Length (Byte)", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Length (Byte)", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
     Set WriteRangeD = Range(HeadersRangeD.Find("Write by DID", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Write by DID", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
@@ -129,7 +129,7 @@ Sub PValXML()
     Set OffsetRangeD = Range(HeadersRangeD.Find("Value offset", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Value offset", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
     Set ListRangeD = Range(HeadersRangeD.Find("List", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("List", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
     Set StartRangeD = Range(HeadersRangeD.Find("Start Byte", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Start Byte", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
-    Set BitOffsetRangeD = Range(HeadersRangeD.Find("Bit offset", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Bit offset", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
+    Set BitOffsetRangeD = Range(HeadersRangeD.Find("Bit Offset", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Bit Offset", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
     Set CodingRangeD = Range(HeadersRangeD.Find("Coding", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Coding", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
     Set IgnoreDefRangeD = Range(HeadersRangeD.Find("IgnoreDef DID", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("IgnoreDef DID", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
     Set AsciRangeD = Range(HeadersRangeD.Find("ASCII|HEXA", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("ASCII|HEXA", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
