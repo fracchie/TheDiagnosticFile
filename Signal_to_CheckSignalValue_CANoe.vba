@@ -38,35 +38,26 @@ Sub SignalsToCheckSignalValueCANoeScriptGen()
 
     Dim A As Integer
     Dim D As Integer
-    Dim HeadersRangeD As Range
-    Dim SignalNameRangeD As Range
-    Dim UnavailableValueRangeD As Range
-    Dim MinValueRangeD As Range
-    Dim MaxValueRangeD As Range
-    Dim ResolutionRangeD As Range
-    Dim SizeRangeD As Range
-    Dim SignRangeD As Range
-    Dim OffsetRangeD As Range
-    Dim CodingRangeD As Range
-    Dim temp As String
-    Dim ExpectedValueRangeD As Range
+    'Find the needed columns in the header list using fixed header A1 cell called SignalName. In case of modification, this needs to be modify accordingly. By default is NOT CASE SENSITIVE
+    Dim HeadersRangeD As Range: Set HeadersRangeD = Range("SignalName", Range("SignalName").End(xlToRight).Address)
+    Dim SignalNameRangeD As Range: Set SignalNameRangeD = Range(HeadersRangeD.Find("Signal Name", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Signal Name").End(xlDown))
+    Dim tableRows As Double: tableRows = SignalNameRangeD.Rows.Count
+    Dim FrameNameRangeD As Range: Set FrameNameRangeD = Range(HeadersRangeD.Find("Frame Name", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Frame Name", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
+    Dim UnavailableValueRangeD As Range: Set UnavailableValueRangeD = Range(HeadersRangeD.Find("Unavailable Value (Hex)", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Unavailable Value (Hex)", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
+    Dim MinValueRangeD As Range: Set MinValueRangeD = Range(HeadersRangeD.Find("Min (Dec)", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Min (Dec)", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
+    Dim MaxValueRangeD As Range: Set MaxValueRangeD = Range(HeadersRangeD.Find("Max (Dec)", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Max (Dec)", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
+    Dim ResolutionRangeD As Range: Set ResolutionRangeD = Range(HeadersRangeD.Find("Resolution (Dec)", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Resolution (Dec)", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
+    Dim SizeRangeD As Range: Set SizeRangeD = Range(HeadersRangeD.Find("Signal Size (Bits)", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Signal Size (Bits)", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
+    Dim SignRangeD As Range: Set SignRangeD = Range(HeadersRangeD.Find("Value Type (Sign)", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Value Type (Sign)", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
+    Dim OffsetRangeD As Range: Set OffsetRangeD = Range(HeadersRangeD.Find("Offset (Dec)", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Offset (Dec)", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
+    Dim CodingRangeD As Range: Set CodingRangeD = Range(HeadersRangeD.Find("Coding (Bin/Hex)", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Coding (Bin/Hex)", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
+    Dim ExpectedValueRangeD As Range: Set ExpectedValueRangeD = Range(HeadersRangeD.Find("Expected Value", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Expected Value", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
 
+    ExpectedValueRangeD.Select
+    Dim signalName As String
+    Dim temp As String
     Dim ExpectedValueDec As String
     Dim ExpectedValueHex As String
-
-    'Find the needed columns in the header list. By default is NOT CASE SENSITIVE
-    'Using fixed header A1 cell called SignalName. In case of modification, this needs to be modify accordingly
-    Set HeadersRangeD = Range("SignalName", Range("SignalName").End(xlToRight).Address)
-    Set SignalNameRangeD = Range(HeadersRangeD.Find("Signal Name", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Signal Name").End(xlDown))
-    Set UnavailableValueRangeD = Range(HeadersRangeD.Find("Unavailable Value (Hex)", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Unavailable Value (Hex)", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
-    Set MinValueRangeD = Range(HeadersRangeD.Find("Min (Dec)", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Min (Dec)", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
-    Set MaxValueRangeD = Range(HeadersRangeD.Find("Max (Dec)", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Max (Dec)", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
-    Set ResolutionRangeD = Range(HeadersRangeD.Find("Resolution (Dec)", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Resolution (Dec)", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
-    Set SizeRangeD = Range(HeadersRangeD.Find("Signal Size (Bits)", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Signal Size (Bits)", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
-    Set SignRangeD = Range(HeadersRangeD.Find("Value Type (Sign)", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Value Type (Sign)", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
-    Set OffsetRangeD = Range(HeadersRangeD.Find("Offset (Dec)", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Offset (Dec)", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
-    Set CodingRangeD = Range(HeadersRangeD.Find("Coding (Bin/Hex)", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Coding (Bin/Hex)", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
-    Set ExpectedValueRangeD = Range(HeadersRangeD.Find("Expected Value", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Expected Value", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
 
 '----- Output File Creation ------
     Dim filePath As String
@@ -80,7 +71,7 @@ Sub SignalsToCheckSignalValueCANoeScriptGen()
 
     Set objFolderItem = objFolder.Items.Item
     filePath = objFolderItem.Path
-    MsgBox filePath & "\" & fileName
+    'MsgBox filePath & "\" & fileName
 
     Dim TempByteSent As String
 
@@ -94,8 +85,6 @@ Sub SignalsToCheckSignalValueCANoeScriptGen()
     Dim FileOut As TextStream
     Set FileOut = MyFSO.CreateTextFile(filePath + "\" + fileName, True, True)
 
-    ExpectedValueRangeD.Select
-
     FileOut.Write ("testCase ")
     FileOut.Write (Range("Signal_Read_Script_Name").value)
     FileOut.Write ("(){")
@@ -104,9 +93,19 @@ Sub SignalsToCheckSignalValueCANoeScriptGen()
 '---- Start the loop
     For D = 2 To SignalNameRangeD.Cells.Count
 
-        Debug.Print (SignalNameRangeD.Cells(D, 1).value)
+        signalName = (SignalNameRangeD.Cells(D, 1).value)
 
-        If (ExpectedValueRangeD.Cells(D, 1).value <> "") Then
+        Debug.Print (signalName)
+
+        If (IsEmpty(ExpectedValueRangeD.Cells(D, 1).value)) Then
+
+            FileOut.WriteLine ("testStep(" + Chr(34) + Chr(34) + "," + Chr(34) + signalName + " = %f" + Chr(34) + ",$" + signalName + ");")
+            FileOut.WriteBlankLines (1)
+        'testStep("","GADE = %f",getSignal(IC_T32019::BCM_A7::GADE));
+
+
+
+        Else '(ExpectedValueRangeD.Cells(D, 1).value <> "") Then
 
            ExpectedValueHex = ExpectedValueRangeD.Cells(D, 1).value
            Debug.Print ("--- Hex: " + ExpectedValueHex)
@@ -147,8 +146,6 @@ Sub SignalsToCheckSignalValueCANoeScriptGen()
            FileOut.WriteBlankLines (2)
 
            FileOut.WriteBlankLines (1)
-        Else
-        ' What to do if expected value is nothing (i.e. "")? expected nothing i would say, just read the value. TODO Check How
 
         End If
 
@@ -156,5 +153,5 @@ Sub SignalsToCheckSignalValueCANoeScriptGen()
 
     FileOut.WriteLine ("}")
 
-    MsgBox "File Created"
+    MsgBox "File Created in " + filePath & "\" & fileName
 End Sub
