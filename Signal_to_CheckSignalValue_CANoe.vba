@@ -25,7 +25,7 @@ Option Explicit
 
 'Public CodingRangeD As Range 'note that the numeric value and the meaning are in two different columns in the MSRS format...
 
-Sub Check_Signal_ScriptGen()
+Sub SignalsToCheckSignalValueCANoeScriptGen()
 
 '============================================================================================================================================================================================================================================================================================
 '           Setup
