@@ -67,22 +67,6 @@ Sub SignalsToCheckSignalValueCANoeScriptGen()
     Set OffsetRangeD = Range(HeadersRangeD.Find("Offset (Dec)", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Offset (Dec)", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
     Set CodingRangeD = Range(HeadersRangeD.Find("Coding (Bin/Hex)", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Coding (Bin/Hex)", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
     Set ExpectedValueRangeD = Range(HeadersRangeD.Find("Expected Value", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Expected Value", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
-'---------- create output file ---------
-' TODO open form to select new file path
-' and to choose the name of the new file
-
-'    Folder = "C:\Users\P096505\OneDrive - Alliance\Bureau\MSRSVal"
-'    FileName = "MSRSVal.txt"
-'
-'    Dim MyFSO As New FileSystemObject
-'    If MyFSO.FolderExists(Folder) Then
-'        'MsgBox "The Folder already exists"
-'    Else
-'        MyFSO.CreateFolder (Folder) '<- Here the
-'    End If
-'
-'    Dim FileOut As TextStream
-'    Set FileOut = MyFSO.CreateTextFile(Folder + "\" + FileName, True, True)
 
 '----- Output File Creation ------
     Dim filePath As String
@@ -111,6 +95,11 @@ Sub SignalsToCheckSignalValueCANoeScriptGen()
     Set FileOut = MyFSO.CreateTextFile(filePath + "\" + fileName, True, True)
 
     ExpectedValueRangeD.Select
+
+    FileOut.Write ("testCase ")
+    FileOut.Write (Range("Signal_Read_Script_Name").value)
+    FileOut.Write ("(){")
+    FileOut.WriteBlankLines (1)
 
 '---- Start the loop
     For D = 2 To SignalNameRangeD.Cells.Count
@@ -164,6 +153,8 @@ Sub SignalsToCheckSignalValueCANoeScriptGen()
         End If
 
     Next D
+
+    FileOut.WriteLine ("}")
 
     MsgBox "File Created"
 End Sub
