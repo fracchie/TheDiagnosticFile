@@ -1,6 +1,8 @@
 'GFL = Generic Function Library
 
 Public Sheet As Worksheet
+Public Const UDS_NACK_13_WrongFormat = "ERROR#2046 : Requested service $2E, Negative reply 11 : Service Not Supported In Active Session"
+Public Const UDS_NACK_31_OutOfRange = "ERROR#2048 : Requested service $2E, Negative reply 31 : Request Out Of Range"
 
 Public Function CreateNewTab(TabName As String)
     For Each Sheet In ThisWorkbook.Worksheets
