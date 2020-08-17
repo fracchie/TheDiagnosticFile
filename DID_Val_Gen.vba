@@ -708,7 +708,7 @@ Public Function MinMaxValueLoop(DIDdefValueBin As String, MinMax As String)
             Else 'UpDownList = "MIN"
                 dec = MinRangeD.Cells(Dt, 1).value
             End If
-            Cells(A, ServiceColA).value = "WRITE value " + MinMax + " " + Str(dec) + " in " + ParamName
+            Cells(A, ServiceColA).value = "WRITE value " + MinMax + " " + Str(dec) + " in " + ParamName + ": size = " + Str(size) + "; res = " + Str(res) + "; offset = " + Str(off)
 
 
             inBin = inBin + NewDecToBin(Str(dec), size, SignRangeD.Cells(Dt, 1).value = "s", NegRepr, res, off)
@@ -777,7 +777,7 @@ Public Function OutOfRangeLoop(DIDdefValueBin As String, UpDownList As String)
                             Cells(A, SIDColA).value = "$2E"
                             Cells(A, IDColA).value = "$" + DIDNumber
                             Cells(A, SessionColA).value = "100" + CStr(session)
-                            Cells(A, ServiceColA).value = "WRITE value NOTUSED " + Str(val) + " in " + ParamName + " -> " + inBin
+                            Cells(A, ServiceColA).value = "WRITE value NOTUSED " + Str(val) + " in " + ParamName + ": size = " + Str(size) + " -> " + inBin
                             Cells(A, RequestColA).value = "2E" + DIDNumber + BinToHex(out)
                             Cells(A, ResponseColA).value = UDS_NACK_31_OutOfRange
                             A = A + 1
@@ -831,7 +831,7 @@ Public Function OutOfRangeLoop(DIDdefValueBin As String, UpDownList As String)
                             Cells(A, SIDColA).value = "$2E"
                             Cells(A, IDColA).value = "$" + DIDNumber
                             Cells(A, SessionColA).value = "100" + CStr(session)
-                            Cells(A, ServiceColA).value = "WRITE value OUTOFRANGE " + Str(dec) + " in " + ParamName + " -> " + inBin
+                            Cells(A, ServiceColA).value = "WRITE value OUTOFRANGE " + Str(dec) + " in " + ParamName + ": size = " + Str(size) + "; res = " + Str(res) + "; offset = " + Str(off) + " -> " + inBin
                             Cells(A, RequestColA).value = "2E" + DIDNumber + BinToHex(out)
                             Cells(A, ResponseColA).value = UDS_NACK_31_OutOfRange
                             A = A + 1
@@ -845,7 +845,7 @@ Public Function OutOfRangeLoop(DIDdefValueBin As String, UpDownList As String)
                             Cells(A, SIDColA).value = "$2E"
                             Cells(A, IDColA).value = "$" + DIDNumber
                             Cells(A, SessionColA).value = "100" + CStr(session)
-                            Cells(A, ServiceColA).value = "WRITE value OUTOFRANGE " + Str(dec) + " in " + ParamName + " -> " + inBin
+                            Cells(A, ServiceColA).value = "WRITE value OUTOFRANGE " + Str(dec) + " in " + ParamName + ": size = " + Str(size) + "; res = " + Str(res) + "; offset = " + Str(off) + " -> " + inBin
                             Cells(A, RequestColA).value = "2E" + DIDNumber + BinToHex(out)
                             Cells(A, ResponseColA).value = UDS_NACK_31_OutOfRange
                             A = A + 1
@@ -858,20 +858,20 @@ Public Function OutOfRangeLoop(DIDdefValueBin As String, UpDownList As String)
 End Function
 
 Public Function ListValueLoop(DIDdefValueBin As String)
-    Dim Dt As Integer
-    Dt = D
+    Dim Dt As Integer: Dt = D
+    Dim ParamName As String
+    Dim dec As Double
+    Dim size As Integer
+    Dim inBin As String
+    Dim out As String
+    Dim bitOff As Integer
+    Dim ByteStart As Integer
+    Dim temp() As String
+    Dim i As Integer
 
     Do While Right(DIDRangeD.Cells(Dt, 1).value, 4) = DIDNumber
         If ListRangeD.Cells(Dt, 1).value <> 0 Then
-            Dim ParamName As String
-            Dim dec As Double
-            Dim size As Integer
-            Dim inBin As String
-            Dim out As String
-            Dim bitOff As Integer
-            Dim ByteStart As Integer
-            Dim temp() As String
-            Dim i As Integer
+
             ParamName = NameRangeD.Cells(Dt, 1).value
             ByteStart = StartRangeD.Cells(Dt, 1).value
             bitOff = BitOffsetRangeD.Cells(Dt, 1).value
@@ -886,7 +886,7 @@ Public Function ListValueLoop(DIDdefValueBin As String)
                     Cells(A, SIDColA).value = "$2E"
                     Cells(A, IDColA).value = "$" + DIDNumber
                     Cells(A, SessionColA).value = "100" + CStr(session)
-                    Cells(A, ServiceColA).value = "WRITE value " + Str(dec) + " in " + ParamName + " -> " + inBin
+                    Cells(A, ServiceColA).value = "WRITE value " + Str(dec) + " in " + ParamName + ": size = " + Str(size) + " -> " + inBin
                     Cells(A, RequestColA).value = "2E" + DIDNumber + BinToHex(out)
                     Cells(A, ResponseColA).value = "6E" + DIDNumber
                     A = A + 1
