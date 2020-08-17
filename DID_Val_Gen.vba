@@ -91,7 +91,6 @@ Public ButtonSession3 As Shape
 Public ButtonRWSession1 As Shape
 Public ButtonRWSession2 As Shape
 Public ButtonRWSession3 As Shape
-Public DefValueButton As Shape
 Public ButtonXML As Shape
 Public ButtonReset As Shape
 
@@ -143,7 +142,6 @@ Sub PValXML()
     Set ButtonRWSession1 = Worksheets("Parameters").Shapes("ButtonRWSession1")
     Set ButtonRWSession2 = Worksheets("Parameters").Shapes("ButtonRWSession2")
     Set ButtonRWSession3 = Worksheets("Parameters").Shapes("ButtonRWSession3")
-    Set DefValueButton = Worksheets("Parameters").Shapes("DefValueButton")
     Set ButtonXML = Worksheets("Parameters").Shapes("ButtonXML")
 
     '----------------------------------------------------------------------------------------------------
@@ -269,21 +267,9 @@ Debug.Print ("")
                         Debug.Print ("-------- DID: " + DIDNumber + " - " + DIDName + "---------")
                     End If
 
-                    '==========================
+                    If (ReadRangeD.Cells(D, 1).value = "X") Then 'some DIDs are not even RO, but only snapshots
 
-                    '=== 1st: READ, ignoring if ignorable
-                    If (IgnoreDefRangeD.Cells(D, 1).value <> 0) Then
-                        IgnoreDef = True
-                    Else
-                        IgnoreDef = False
-                    End If
-
-                    If (ReadRangeD.Cells(D, 1).value <> 0) Then 'some DIDs are not even RO, but only snapshots
-                        If (IgnoreDef = True) Or (DefaultRangeD.Cells(D, 1).value = "na") Then
-                            Call DIDValStep("READ", "DEF", "IGNORE") 'TODO const READ etc
-                        Else
-                            Call DIDValStep("CHECK", "DEF")
-                        End If
+                        Call DIDValStep("READ", "DEF") 'TODO const READ etc
 
                         '== 1st if RW, also a WRITE in session1 - expected to be forbidden
                         If ((session = 1 And ButtonRWSession1.TextFrame.Characters.text = "ON") Or (session = 2 And ButtonRWSession2.TextFrame.Characters.text = "ON")) Then
@@ -373,22 +359,10 @@ Debug.Print ("")
 
                     DIDLength = LengthRangeD.Cells(D, 1).value
 
-                    'Detect IgnoreDef for DID D
-                    If (IgnoreDefRangeD.Cells(D, 1).value <> 0) Then
-                        IgnoreDef = True
+                    If ReadRangeD.Cells(D, 1).value = "X" Then
+                        Call DIDValStep("READ", "DEF")
                     Else
-                        IgnoreDef = False
-                    End If
-
-                    If DefValueButton.TextFrame.Characters.text = "ON" Then
-                        'Read Def value
-                        If (ReadRangeD.Cells(D, 1).value <> 0) Then
-                            If (IgnoreDef = True) Then
-                                Call DIDValStep("READ", "DEF", "IGNORE") 'TODO const READ etc
-                            Else
-                                Call DIDValStep("CHECK", "DEF")
-                            End If
-                        End If
+                        'just snapshot, what to do with them?
                     End If
 
                     ' 2nd: Execute Write operation if active. If possible, try to write min, max, OutOfRange value,checking everytime
@@ -609,22 +583,17 @@ Function DIDValStepOutOfRange(parameter As String, UpDownNotUsed As String, requ
 End Function
 
 Function DIDValStep(operation As String, what As String, Optional ByVal response As String = "", Optional ByVal valueDec As String = "")
+    value = ""
 
     Debug.Print ("-------------- " + operation + " " + what + " --------------")
 
-'=== Write all the cells of the Arrival table, using Value as a temporary variable:
-
-    'number of step: needed for script with pris diag -> scriptEditor
-    Cells(A, 1).value = A - 1
-
-    'Write the kind of operation to perform
-    Cells(A, ServiceColA).value = operation + " value " + what + " " + valueDec + " in " + DIDName
-
+    Cells(A, 1).value = A - 1 'number of step: needed for script with pris diag -> scriptEditor
+    Cells(A, ServiceColA).value = operation + " value " + what + " " + valueDec + " in " + DIDName 'Write the kind of operation to perform
     Cells(A, IDColA).value = DIDRangeD.Cells(D, 1).value
     Cells(A, SessionColA).value = "100" + CStr(session)
 
-    'compose the content of the DID, either for the request or for the response
-    If response <> "IGNORE" Then value = ComputeContent(what)
+    'compose the content of the DID, either for the request or for the response. With NA in default cell we indicate the DID for which no specific def value is required, hence no check to be performed, just read the content
+    If DefaultRangeD.Cells(D, 1) <> "NA" Then value = ComputeContent(what)
 
     Select Case operation
         Case "WRITE"
@@ -633,13 +602,13 @@ Function DIDValStep(operation As String, what As String, Optional ByVal response
             Cells(A, SIDColA).value = "$2E"
             'write response
             If response = "FORBIDDEN" Then
-                Cells(A, ResponseColA).value = "ERROR#2046 : Requested service $2E, Negative reply 11 : Service Not Supported In Active Session"
+                Cells(A, ResponseColA).value = UDS_NACK_13_WrongFormat
                 Range(Cells(A, ResponseColA).Address).HorizontalAlignment = xlLeft
             ElseIf response = "READONLY" Then
-                Cells(A, ResponseColA).value = "ERROR#2048 : Requested service $2E, Negative reply 31 : Request Out Of Range"
+                Cells(A, ResponseColA).value = UDS_NACK_31_OutOfRange
                 Range(Cells(A, ResponseColA).Address).HorizontalAlignment = xlLeft
             ElseIf response = "OUTOFRANGE" Then
-                Cells(A, ResponseColA).value = "ERROR#2048 : Requested service $2E, Negative reply 31 : Request Out Of Range "
+                Cells(A, ResponseColA).value = UDS_NACK_31_OutOfRange
                 Range(Cells(A, ResponseColA).Address).HorizontalAlignment = xlLeft
             Else
                 Cells(A, ResponseColA).value = "6E" + DIDNumber
@@ -810,7 +779,7 @@ Public Function OutOfRangeLoop(DIDdefValueBin As String, UpDownList As String)
                             Cells(A, SessionColA).value = "100" + CStr(session)
                             Cells(A, ServiceColA).value = "WRITE value NOTUSED " + Str(val) + " in " + ParamName + " -> " + inBin
                             Cells(A, RequestColA).value = "2E" + DIDNumber + BinToHex(out)
-                            Cells(A, ResponseColA).value = "ERROR#2048 : Requested service $2E, Negative reply 31 : Request Out Of Range"
+                            Cells(A, ResponseColA).value = UDS_NACK_31_OutOfRange
                             A = A + 1
                         End If
                     Next i
@@ -864,7 +833,7 @@ Public Function OutOfRangeLoop(DIDdefValueBin As String, UpDownList As String)
                             Cells(A, SessionColA).value = "100" + CStr(session)
                             Cells(A, ServiceColA).value = "WRITE value OUTOFRANGE " + Str(dec) + " in " + ParamName + " -> " + inBin
                             Cells(A, RequestColA).value = "2E" + DIDNumber + BinToHex(out)
-                            Cells(A, ResponseColA).value = "ERROR#2048 : Requested service $2E, Negative reply 31 : Request Out Of Range"
+                            Cells(A, ResponseColA).value = UDS_NACK_31_OutOfRange
                             A = A + 1
                         End If
                     Else 'DOWN
@@ -878,7 +847,7 @@ Public Function OutOfRangeLoop(DIDdefValueBin As String, UpDownList As String)
                             Cells(A, SessionColA).value = "100" + CStr(session)
                             Cells(A, ServiceColA).value = "WRITE value OUTOFRANGE " + Str(dec) + " in " + ParamName + " -> " + inBin
                             Cells(A, RequestColA).value = "2E" + DIDNumber + BinToHex(out)
-                            Cells(A, ResponseColA).value = "ERROR#2048 : Requested service $2E, Negative reply 31 : Request Out Of Range"
+                            Cells(A, ResponseColA).value = UDS_NACK_31_OutOfRange
                             A = A + 1
                         End If
                     End If
