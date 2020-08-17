@@ -10,107 +10,57 @@ Sub ToDID()
 ' One can copy paste its whole parameters list into the tab called (for the moment) "Parameters".
 'One can copy all the columns, no matter the number and differences, but the name of the used columns must be changed as specified in the parameters tab of the dfiagnostic file
 
-'----------------------------------------------------------------------------------------------------
-'Variables declaration
-'----------------------------------------------------------------------------------------------------
-    '"Departure" sheet
-    Dim HeadersRangeD As Range
-    Dim NameRangeD As Range
-    Dim DIDRangeD As Range
-    Dim LengthRangeD As Range
-    Dim ReadRangeD As Range
-    Dim WriteRangeD As Range
-    Dim SnapshotRangeD As Range
-    Dim StartRangeD As Range
-    Dim BitOffsetRangeD As Range
+
+    Worksheets("Parameters").Activate
+
+    '"Departure" sheet: Parameters
+    Dim HeadersRangeD As Range: Set HeadersRangeD = Range("Name", Range("Name").End(xlToRight).Address) 'the search of the header of the table is based on the top left cell which is named "Name"
+    Dim NameRangeD As Range: Set NameRangeD = Range(HeadersRangeD.Find("Name", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Name", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
+    Dim DIDRangeD As Range: Set DIDRangeD = Range(HeadersRangeD.Find("DID", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("DID", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
+    Dim LengthRangeD As Range: Set LengthRangeD = Range(HeadersRangeD.Find("Length (Byte)", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Length (Byte)", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
+    Dim ReadRangeD As Range: Set ReadRangeD = Range(HeadersRangeD.Find("Read by DID", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Read by DID", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
+    Dim WriteRangeD As Range: Set WriteRangeD = Range(HeadersRangeD.Find("Write by DID", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Write by DID", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
+    Dim SnapshotRangeD As Range: Set SnapshotRangeD = Range(HeadersRangeD.Find("Snapshots", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Snapshots", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
+    Dim StartRangeD As Range: Set StartRangeD = Range(HeadersRangeD.Find("Start Byte", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Start Byte", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
+    Dim BitOffsetRangeD As Range: Set BitOffsetRangeD = Range(HeadersRangeD.Find("Bit Offset", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Bit Offset", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
+
     Dim DID As String
 
-    '"Arrival" sheet :toDATA
-    Dim NameColA As Integer, MnemoColA As Integer, ParamColA As Integer, SignColA As Integer, StartColA As Integer, OffColA As Integer, EndianColA As Integer, RefColA As Integer
-    Dim HeadersRangeA As Range
-    Dim list As String, value As String, Label As String
-    Dim A As Integer, D As Integer
+    '"Arrival" sheet :toDID
+    Call CreateNewTab("ToDID")
+
+    Dim NameColA As Integer: NameColA = 1
+    Dim MnemoColA As Integer: MnemoColA = 2
+    Dim ParamColA As Integer: ParamColA = 3
+    Dim SignColA As Integer
+    Dim StartColA As Integer: StartColA = 4
+    Dim OffColA As Integer: OffColA = 5
+    Dim EndianColA As Integer: EndianColA = 6
+    Dim RefColA As Integer: RefColA = 7
+    Dim HeadersRangeA As Range:  Set HeadersRangeA = Range(Cells(1, NameColA), Cells(1, RefColA))
+
+    Dim list As String
+    Dim value As String
+    Dim Label As String
+    Dim A As Integer
+    Dim D As Integer
     Dim Color
     Dim Sheet As Worksheet
     Dim Cell As Range
-
-    Worksheets("Parameters").Activate
-'----------------------------------------------------------------------------------------------------
-    'the search of the header of the table is based on the top left cell which is named "Name"
-    Set HeadersRangeD = Range("Name", Range("Name").End(xlToRight).Address)
-    Set NameRangeD = Range(HeadersRangeD.Find("Name", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Name", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
-    Set DIDRangeD = Range(HeadersRangeD.Find("DID", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("DID", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
-    Set LengthRangeD = Range(HeadersRangeD.Find("Length (Byte)", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Length (Byte)", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
-    Set StartRangeD = Range(HeadersRangeD.Find("Start Byte", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Start Byte", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
-    Set BitOffsetRangeD = Range(HeadersRangeD.Find("Bit Offset", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Bit Offset", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
-    Set ReadRangeD = Range(HeadersRangeD.Find("Read by DID", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Read by DID", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
-    Set WriteRangeD = Range(HeadersRangeD.Find("Write by DID", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Write by DID", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
-    Set SnapshotRangeD = Range(HeadersRangeD.Find("Snapshots", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).Address, HeadersRangeD.Find("Snapshots", LookIn:=xlValues, Lookat:=xlWhole, MatchCase:=True).End(xlDown))
-
-    WriteRangeD.Select
-
-'----------------------------------------------------------------------------------------------------
-'"Arrival" sheet : BetaToDID
-'----------------------------------------------------------------------------------------------------
-
-    For Each Sheet In ThisWorkbook.Worksheets
-        If Sheet.Name Like "ToDID" Then
-            Application.DisplayAlerts = False
-            Worksheets("ToDID").Delete
-            ActiveWorkbook.Sheets.Add After:=Worksheets(Worksheets.Count)
-            ActiveSheet.Name = "ToDID"
-            Exit For
-        ElseIf Sheet Is Worksheets.Item(Worksheets.Count) = True Then
-            ActiveWorkbook.Sheets.Add After:=Worksheets(Worksheets.Count)
-            ActiveSheet.Name = "ToDID"
-        End If
-    Next Sheet
-    'Work on the "toDATA" sheet
-    Worksheets("ToDID").Activate
-
-    'Define  the columns containing the data, by default
-    NameColA = 1
-    MnemoColA = 2
-    ParamColA = 3
-    StartColA = 4
-    OffColA = 5
-    EndianColA = 6
-    RefColA = 7
 
     '----------------------------------------------------------------------------------------
     'Headers
     '----------------------------------------------------------------------------------------
     A = 1
-    Cells(A, NameColA).value = "DID_name"
-    Cells(A, MnemoColA).value = "Mnemo"
-    Cells(A, ParamColA).value = "Data_name"
-    Cells(A, StartColA).value = "Size / Start Byte"
-    Cells(A, OffColA).value = "Bit Offset"
-    Cells(A, EndianColA).value = "Little/Big Endian"
-    Cells(A, RefColA).value = "Ref"
 
-    'Format
-    'Format:Columns width
-    Columns(NameColA).ColumnWidth = 40
-    Columns(MnemoColA).ColumnWidth = 11
+    Call formatCell(A, NameColA, "DID_name", True, 10, "BLACK", "NORMAL", "ORANGE", 40, 15)
+    Call formatCell(A, MnemoColA, "Mnemo", True, 10, "BLACK", "NORMAL", "ORANGE", 11, 15)
     Columns(MnemoColA).NumberFormat = "@"
-    Columns(ParamColA).ColumnWidth = 60
-    Range(Columns(StartColA), Columns(RefColA)).ColumnWidth = 14
-    'Format:interior color
-    Set HeadersRangeA = Range(Cells(A, NameColA), Cells(A, RefColA))
-    HeadersRangeA.Interior.Color = RGB(255, 192, 0)
-    HeadersRangeA.RowHeight = 30
-    HeadersRangeA.Font.Bold = 1
-    HeadersRangeA.HorizontalAlignment = xlCenter
-    HeadersRangeA.VerticalAlignment = xlCenter
-
-
-    'Format:Borders
-    HeadersRangeA.borders(xlEdgeBottom).Color = RGB(0, 0, 0)
-    HeadersRangeA.borders(xlEdgeLeft).Color = RGB(0, 0, 0)
-    HeadersRangeA.borders(xlEdgeRight).Color = RGB(0, 0, 0)
-    HeadersRangeA.borders(xlEdgeTop).Color = RGB(0, 0, 0)
-    HeadersRangeA.borders(xlInsideVertical).Color = RGB(0, 0, 0)
+    Call formatCell(A, ParamColA, "Data_name", True, 10, "BLACK", "NORMAL", "ORANGE", 60, 15)
+    Call formatCell(A, StartColA, "Size / Start Byte", True, 10, "BLACK", "NORMAL", "ORANGE", 15, 15)
+    Call formatCell(A, OffColA, "Bit Offset", True, 10, "BLACK", "NORMAL", "ORANGE", 15, 15)
+    Call formatCell(A, EndianColA, "Little/Big Endian", True, 10, "BLACK", "NORMAL", "ORANGE", 15, 15)
+    Call formatCell(A, RefColA, "Ref", True, 10, "BLACK", "NORMAL", "ORANGE", 15, 15)
 
 
     A = 2
