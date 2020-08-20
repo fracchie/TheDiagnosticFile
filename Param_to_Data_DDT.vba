@@ -192,7 +192,7 @@ Sub ToData()
                 list = Split(CodingRangeD.Cells(D, 1), vbLf)
                 l = 0
                 For l = 0 To UBound(list)
-                    If InStr(list(l), "Not Used") <> 0 Then
+                    If InStr(list(l), "Not Used") = 0 Then
                         A = A + 1
                         Cells(A, MnemoColA).value = Left(list(l), InStr(list(l), ":") - 1)
                         Cells(A, SizeColA).value = Right(list(l), Len(list(l)) - InStr(list(l), ":"))
