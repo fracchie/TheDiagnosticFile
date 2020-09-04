@@ -158,7 +158,6 @@ Debug.Print ("")
 
             '============ xml file creation =============
             ScriptNameSpecific = Range("TDR_V").value + "_" + ECUName + "_" + FrameName + "_" + SignalName + "_" + FailureType 'TODO if two line with same failure type - no case so far -  consider to do something here
-            ScriptNameSpecific = "ciao"
             fileName = ScriptNameSpecific
             Dim MyFSO As New FileSystemObject
             If MyFSO.FolderExists(filePath) Then
